@@ -261,12 +261,19 @@
         </div>
         <div id="cart-items" class="flex-1 overflow-y-auto space-y-1 mb-3 min-h-[80px] md:min-h-[100px]"></div>
         <div class="border-t border-dark-600 pt-3 space-y-1">
-         <div class="flex justify-between text-[9px] md:text-xs"><span>Subtotal</span><span id="cart-subtotal">$0</span>
+         <div class="flex justify-between text-[9px] md:text-xs"><span>Subtotal</span><span id="cart-subtotal">$0</span></div>
+         <div class="flex justify-between text-[9px] md:text-xs"><span>IVA (16%)</span><span id="cart-tax">$0</span></div>
+         <div class="flex justify-between font-bold text-gold-500"><span>Total</span><span id="cart-total">$0</span></div>
+         
+         <div class="flex justify-between items-center text-[9px] md:text-xs mt-2 pt-2 border-t border-dark-700">
+           <span>Efectivo Recibido</span>
+           <input id="pos-payment" type="number" min="0" placeholder="0.00" class="w-20 md:w-24 bg-dark-700 border border-dark-600 rounded px-2 py-1 text-right text-gold-500 font-bold focus:border-gold-500 outline-none" oninput="calculateChange()">
          </div>
-         <div class="flex justify-between text-[9px] md:text-xs"><span>IVA (16%)</span><span id="cart-tax">$0</span>
+         <div class="flex justify-between font-bold text-green-400 text-[9px] md:text-xs">
+           <span>Cambio</span>
+           <span id="cart-change">$0.00</span>
          </div>
-         <div class="flex justify-between font-bold text-gold-500"><span>Total</span><span id="cart-total">$0</span>
-         </div>
+        </div>  
         </div><button onclick="processSale()" class="mt-3 w-full bg-gold-500 text-dark-900 font-bold py-2 md:py-2.5 rounded-lg text-xs hover:bg-gold-400 transition">Cobrar</button>
        </div>
       </div>
@@ -504,6 +511,11 @@
    </div>
   </div>
   <script>
+
+
+
+
+
     // Configuración
     const config = {
       business_name: 'Barbería Cochilocos',
@@ -589,6 +601,34 @@
 
     function removeFromCart(index) { cart.splice(index,1); renderCart(); }
 
+
+    function calculateChange() {
+      const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
+      const tax = Math.round(subtotal * 0.16);
+      const total = subtotal + tax;
+      
+      const paymentInput = document.getElementById('pos-payment');
+      const changeEl = document.getElementById('cart-change');
+      if (!paymentInput || !changeEl) return;
+
+      const payment = parseFloat(paymentInput.value) || 0;
+
+      if (payment >= total && total > 0) {
+        changeEl.textContent = '$' + (payment - total).toFixed(2);
+        changeEl.className = 'text-green-400 font-bold text-[9px] md:text-xs';
+      } else {
+        if (payment > 0 && payment < total) {
+            changeEl.textContent = 'Faltan $' + (total - payment).toFixed(2);
+            changeEl.className = 'text-red-400 font-bold text-[9px] md:text-xs';
+        } else {
+            changeEl.textContent = '$0.00';
+            changeEl.className = 'text-green-400 font-bold text-[9px] md:text-xs';
+        }
+      }
+    }
+
+
+    
     function renderCart() {
       const container = document.getElementById('cart-items');
       container.innerHTML = cart.length === 0 ? '<p class="text-[10px] md:text-[11px] text-dark-400 text-center py-3 md:py-4">Carrito vacío</p>' :
@@ -602,14 +642,27 @@
       document.getElementById('cart-subtotal').textContent = '$' + subtotal;
       document.getElementById('cart-tax').textContent = '$' + tax;
       document.getElementById('cart-total').textContent = '$' + (subtotal + tax);
+      calculateChange(); // <--- Agrega esta línea
       lucide.createIcons();
     }
 
     function processSale() {
       if (cart.length === 0) { showToast('Agrega items', 'red'); return; }
+
+      const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
+      const tax = Math.round(subtotal * 0.16);
+      const finalTotal = subtotal + tax;
+      const payment = parseFloat(document.getElementById('pos-payment').value) || 0;
+
+      // Validar que el pago cubra el total
+      if (payment < finalTotal) {
+        showToast('Efectivo insuficiente para cubrir el total', 'red');
+        return;
+      }
+
+      const change = payment - finalTotal;
       const client = document.getElementById('pos-client').value || 'Cliente General';
       const employee = document.getElementById('pos-employee').value;
-      const total = cart.reduce((s,i) => s + i.price * i.qty, 0);
       ticketCounter++;
 
       for (const item of cart) {
@@ -628,10 +681,15 @@
         })) return;
       }
 
-      showTicket(client, employee, cart, total);
+      // Le pasamos el total, el pago y el cambio al ticket
+      showTicket(client, employee, cart, subtotal, payment, change);
+      
+      // Limpiar el carrito y los campos de texto
       cart = [];
       renderCart();
       document.getElementById('pos-client').value = '';
+      if(document.getElementById('pos-payment')) document.getElementById('pos-payment').value = '';
+      calculateChange(); 
       showToast('¡Venta guardada!');
     }
 
@@ -920,9 +978,11 @@
     function prevSalesMonth() { currentSalesCalendarDate = new Date(currentSalesCalendarDate.getFullYear(), currentSalesCalendarDate.getMonth() - 1, 1); renderSalesCalendar(); }
     function nextSalesMonth() { currentSalesCalendarDate = new Date(currentSalesCalendarDate.getFullYear(), currentSalesCalendarDate.getMonth() + 1, 1); renderSalesCalendar(); }
 
-    function showTicket(client, employee, items, total) {
-      const tax = Math.round(total * 0.16);
+    function showTicket(client, employee, items, subtotal, payment = 0, change = 0) {
+      const tax = Math.round(subtotal * 0.16);
+      const finalTotal = subtotal + tax;
       const content = document.getElementById('ticket-content');
+      
       content.innerHTML = `
         <div class="border-b pb-3 mb-3">
           <div class="w-10 md:w-12 h-10 md:h-12 rounded-full bg-gradient-to-br from-yellow-600 to-yellow-800 mx-auto mb-2 flex items-center justify-center text-white font-bold text-lg md:text-xl">C</div>
@@ -939,10 +999,14 @@
         <div class="border-t border-b py-2 mb-2 text-left">
           ${items.map(i => `<div class="flex justify-between text-[10px] md:text-[11px] py-0.5"><span>${i.name} x${i.qty}</span><span>$${i.price*i.qty}</span></div>`).join('')}
         </div>
-        <div class="text-left text-[10px] md:text-[11px] space-y-0.5">
-          <div class="flex justify-between"><span>Subtotal:</span><span>$${total}</span></div>
+        <div class="text-left text-[10px] md:text-[11px] space-y-0.5 mb-2 pb-2 border-b">
+          <div class="flex justify-between"><span>Subtotal:</span><span>$${subtotal}</span></div>
           <div class="flex justify-between"><span>IVA (16%):</span><span>$${tax}</span></div>
-          <div class="flex justify-between font-bold text-base"><span>Total:</span><span>$${total+tax}</span></div>
+          <div class="flex justify-between font-bold text-base mt-1"><span>Total:</span><span>$${finalTotal}</span></div>
+        </div>
+        <div class="text-left text-[10px] md:text-[11px] space-y-0.5 font-bold">
+          <div class="flex justify-between text-gray-600"><span>Efectivo Recibido:</span><span>$${payment.toFixed(2)}</span></div>
+          <div class="flex justify-between text-green-600"><span>Cambio:</span><span>$${change.toFixed(2)}</span></div>
         </div>
         <p class="text-[8px] md:text-[9px] text-gray-400 mt-3">¡Gracias por su preferencia!</p>
       `;

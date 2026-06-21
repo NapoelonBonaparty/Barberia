@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="es" class="h-full">
+ <head><script src="/_sdk/telemetry_sdk.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barbería Cochilocos</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&amp;family=DM+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: { 50:'#fff9e6', 100:'#fff0b3', 200:'#ffe680', 300:'#ffd94d', 400:'#ffcc1a', 500:'#d4af37', 600:'#b8960e', 700:'#8c7200', 800:'#604e00', 900:'#332900' },
+            dark: { 50:'#f5f5f5', 100:'#e0e0e0', 200:'#bdbdbd', 300:'#9e9e9e', 400:'#757575', 500:'#616161', 600:'#424242', 700:'#2d2d2d', 800:'#1a1a1a', 900:'#0d0d0d' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-dark-900 text-white overflow-hidden">
+  <div id="app" class="h-full w-full flex">
+   <!-- Sidebar -->
+   <aside id="sidebar" class="w-64 bg-dark-800 border-r border-dark-600 flex-shrink-0 flex flex-col h-full transition-all duration-300 lg:relative fixed z-50 -translate-x-full lg:translate-x-0">
+    <div class="p-5 border-b border-dark-600">
+     <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center text-dark-900 font-bold text-lg font-display">
+       C
+      </div>
+      <div>
+       <h1 class="font-display font-bold text-gold-500 text-sm" id="brand-name">Cochilocos</h1>
+       <p class="text-[10px] text-dark-300">Sistema Administrativo</p>
+      </div>
+     </div>
+    </div>
+    <nav class="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hide">
+     <button onclick="navigate('dashboard')" class="sidebar-link active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="dashboard"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="hidden sm:inline">Dashboard</span></button> <button onclick="navigate('pos')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="pos"><i data-lucide="shopping-cart" class="w-4 h-4"></i><span class="hidden sm:inline">POS</span></button> <button onclick="navigate('appointments')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="appointments"><i data-lucide="calendar" class="w-4 h-4"></i><span class="hidden sm:inline">Agenda</span></button> <button onclick="navigate('clients')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="clients"><i data-lucide="users" class="w-4 h-4"></i><span class="hidden sm:inline">Clientes</span></button> <button onclick="navigate('services')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="services"><i data-lucide="scissors" class="w-4 h-4"></i><span class="hidden sm:inline">Servicios</span></button> <button onclick="navigate('products')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="products"><i data-lucide="package" class="w-4 h-4"></i><span class="hidden sm:inline">Productos</span></button> <button onclick="navigate('employees')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="employees"><i data-lucide="user-check" class="w-4 h-4"></i><span class="hidden sm:inline">Empleados</span></button> <button onclick="navigate('finance')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="finance"><i data-lucide="trending-up" class="w-4 h-4"></i><span class="hidden sm:inline">Finanzas</span></button> <button onclick="navigate('tickets')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="tickets"><i data-lucide="receipt" class="w-4 h-4"></i><span class="hidden sm:inline">Tickets</span></button>
+    </nav>
+    <div class="p-3 border-t border-dark-600">
+     <div class="flex items-center gap-2 px-3 py-2">
+      <div class="w-8 h-8 rounded-full bg-dark-600 flex items-center justify-center"><i data-lucide="user" class="w-4 h-4 text-gold-500"></i>
+      </div>
+      <div class="hidden sm:block">
+       <p class="text-xs font-medium">Administrador</p>
+       <p class="text-[10px] text-dark-400">Online</p>
+      </div>
+     </div>
+    </div>
+   </aside><!-- Main -->
+   <main class="flex-1 flex flex-col h-full overflow-hidden">
+    <!-- Header -->
+    <header class="h-14 bg-dark-800 border-b border-dark-600 flex items-center justify-between px-4 flex-shrink-0">
+     <div class="flex items-center gap-3">
+      <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-dark-700"><i data-lucide="menu" class="w-5 h-5"></i></button>
+      <h2 id="page-title" class="font-display font-bold text-lg">Dashboard</h2>
+     </div>
+     <div class="flex items-center gap-2">
+      <div class="relative hidden sm:block">
+       <input type="text" placeholder="Buscar..." class="pl-8 pr-3 py-1.5 rounded-lg text-xs w-48"> <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-dark-400"></i>
+      </div><button class="p-2 rounded-lg hover:bg-dark-700 relative"><i data-lucide="bell" class="w-4 h-4"></i><span class="absolute top-1 right-1 w-2 h-2 bg-gold-500 rounded-full"></span></button>
+     </div>
+    </header><!-- Content -->
+    <div id="content" class="flex-1 overflow-y-auto p-3 md:p-6 scrollbar-hide">
+     <!-- Dashboard View -->
+     <div id="view-dashboard" class="fade-in">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
+       <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 cursor-pointer hover:border-gold-500" onclick="navigate('pos')">
+        <div class="flex items-center justify-between mb-2"><i data-lucide="dollar-sign" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i><span class="text-[8px] md:text-[10px] text-green-400 bg-green-400/10 px-1 py-0.5 rounded">Hoy</span>
+        </div>
+        <p class="text-base md:text-xl font-bold" id="stat-today">$0</p>
+        <p class="text-[10px] md:text-[11px] text-dark-400">Ventas hoy</p>
+       </div>
+       <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 cursor-pointer hover:border-gold-500" onclick="navigate('appointments')">
+        <div class="flex items-center justify-between mb-2"><i data-lucide="calendar" class="w-4 md:w-5 h-4 md:h-5 text-blue-400"></i><span class="text-[8px] md:text-[10px] text-blue-400 bg-blue-400/10 px-1 py-0.5 rounded">Hoy</span>
+        </div>
+        <p class="text-base md:text-xl font-bold" id="stat-appointments">0</p>
+        <p class="text-[10px] md:text-[11px] text-dark-400">Citas del día</p>
+       </div>
+       <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
+        <div class="flex items-center justify-between mb-2"><i data-lucide="users" class="w-4 md:w-5 h-4 md:h-5 text-purple-400"></i>
+        </div>
+        <p class="text-base md:text-xl font-bold" id="stat-clients">0</p>
+        <p class="text-[10px] md:text-[11px] text-dark-400">Clientes</p>
+       </div>
+       <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
+        <div class="flex items-center justify-between mb-2"><i data-lucide="package" class="w-4 md:w-5 h-4 md:h-5 text-orange-400"></i>
+        </div>
+        <p class="text-base md:text-xl font-bold" id="stat-products">0</p>
+        <p class="text-[10px] md:text-[11px] text-dark-400">Productos</p>
+       </div>
+      </div><!-- KPI Row -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+       <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
+        <div class="flex items-center justify-between mb-2">
+         <h3 class="text-xs md:text-sm font-semibold">Nómina</h3><i data-lucide="briefcase" class="w-3 md:w-4 h-3 md:h-4 text-green-400"></i>
+        </div>
+        <p class="text-xl md:text-2xl font-bold text-green-400" id="stat-payroll">$0</p>
+        <p class="text-[9px] md:text-[10px] text-dark-400 mt-1">Costo hoy</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
+        <div class="flex items-center justify-between mb-2">
+         <h3 class="text-xs md:text-sm font-semibold">Gastos</h3><i data-lucide="trending-down" class="w-3 md:w-4 h-3 md:h-4 text-red-400"></i>
+        </div>
+        <p class="text-xl md:text-2xl font-bold text-red-400" id="stat-expenses">$0</p>
+        <p class="text-[9px] md:text-[10px] text-dark-400 mt-1">Estimado</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
+        <div class="flex items-center justify-between mb-2">
+         <h3 class="text-xs md:text-sm font-semibold">Ganancia</h3><i data-lucide="trending-up" class="w-3 md:w-4 h-3 md:h-4 text-gold-500"></i>
+        </div>
+        <p class="text-xl md:text-2xl font-bold text-gold-500" id="stat-profit">$0</p>
+        <p class="text-[9px] md:text-[10px] text-dark-400 mt-1">Neta</p>
+       </div>
+      </div><!-- Sales Calendar -->
+      <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 mb-4 md:mb-6">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xs md:text-sm font-semibold">Ventas del Mes</h3>
+        <div class="flex items-center gap-2"><button onclick="prevSalesMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-left" class="w-3 md:w-4 h-3 md:h-4"></i></button><span id="sales-month-display" class="text-xs md:text-sm font-medium text-gold-500 min-w-[100px] text-center">Enero 2024</span><button onclick="nextSalesMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-right" class="w-3 md:w-4 h-3 md:h-4"></i></button>
+        </div>
+       </div>
+       <div class="grid grid-cols-7 gap-1 md:gap-2 mb-2">
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+         Lun
+        </div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+         Mar
+        </div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+         Mié
+        </div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+         Jue
+        </div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+         Vie
+        </div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+         Sáb
+        </div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+         Dom
+        </div>
+       </div>
+       <div id="sales-calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2 mb-3 md:mb-4"></div>
+       <div class="flex flex-wrap gap-2 md:gap-4 text-[8px] md:text-[10px] pt-3 border-t border-dark-600">
+        <div class="flex items-center gap-2">
+         <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-dark-700 border border-dark-600"></div><span class="text-dark-400">$0</span>
+        </div>
+        <div class="flex items-center gap-2">
+         <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-blue-900"></div><span class="text-dark-400">$100-500</span>
+        </div>
+        <div class="flex items-center gap-2">
+         <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-blue-600"></div><span class="text-dark-400">$500-1000</span>
+        </div>
+        <div class="flex items-center gap-2">
+         <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-gold-600"></div><span class="text-dark-400">$1000+</span>
+        </div>
+       </div>
+      </div><!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+       <div class="lg:col-span-2 bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
+        <h3 class="font-semibold text-xs md:text-sm mb-3">Ventas de la Semana</h3>
+        <div class="h-32 md:h-40 flex items-end gap-1 md:gap-2" id="weekly-chart"></div>
+       </div>
+       <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
+        <h3 class="font-semibold text-xs md:text-sm mb-3">Servicios Populares</h3>
+        <div id="services-ranking" class="space-y-2"></div>
+       </div>
+      </div>
+     </div><!-- Appointments View -->
+     <div id="view-appointments" class="fade-in hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
+       <!-- Calendar -->
+       <div class="lg:col-span-2 bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        <div class="flex items-center justify-between mb-4">
+         <button onclick="prevMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+         <h3 class="text-xs md:text-sm font-semibold text-center flex-1" id="calendar-month">Enero 2024</h3><button onclick="nextMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+        </div>
+        <div class="grid grid-cols-7 gap-1 md:gap-2 mb-2">
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+          Lun
+         </div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+          Mar
+         </div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+          Mié
+         </div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+          Jue
+         </div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+          Vie
+         </div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+          Sáb
+         </div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
+          Dom
+         </div>
+        </div>
+        <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2 mb-4"></div>
+       </div><!-- Form -->
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 h-fit">
+        <h3 class="text-xs md:text-sm font-semibold mb-3">Nueva Cita</h3>
+        <div class="space-y-2 md:space-y-3">
+         <div>
+          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Cliente*</label> <input id="apt-client" type="text" class="w-full rounded-lg px-3 py-1.5 text-xs" placeholder="Nombre">
+         </div>
+         <div>
+          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Teléfono</label> <input id="apt-phone" type="text" class="w-full rounded-lg px-3 py-1.5 text-xs" placeholder="Teléfono">
+         </div>
+         <div>
+          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Servicio*</label> <select id="apt-service" class="w-full rounded-lg px-3 py-1.5 text-xs"> <option>Corte Clásico</option> <option>Corte + Barba</option> <option>Fade Premium</option> <option>Tinte</option> <option>Barba</option> </select>
+         </div>
+         <div>
+          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Barbero*</label> <select id="apt-employee" class="w-full rounded-lg px-3 py-1.5 text-xs"> <option>Carlos</option> <option>Miguel</option> <option>Jesús</option> </select>
+         </div>
+         <div>
+          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Fecha*</label> <input id="apt-date" type="text" class="w-full rounded-lg px-3 py-1.5 text-xs bg-dark-700 cursor-default" readonly placeholder="Selecciona día">
+         </div>
+         <div>
+          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Hora*</label> <input id="apt-time" type="time" class="w-full rounded-lg px-3 py-1.5 text-xs" value="10:00">
+         </div>
+         <div>
+          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Notas</label> <textarea id="apt-notes" class="w-full rounded-lg px-3 py-1.5 text-xs" placeholder="Observaciones..." rows="2"></textarea>
+         </div><button onclick="saveAppointment()" class="w-full bg-gold-500 text-dark-900 py-2 rounded-lg text-xs font-semibold hover:bg-gold-400 transition">Guardar</button>
+        </div>
+       </div>
+      </div><!-- Upcoming appointments -->
+      <div class="mt-4 bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+       <h3 class="text-xs md:text-sm font-semibold mb-3">Próximas Citas</h3>
+       <div id="appointments-list" class="space-y-2"></div>
+      </div>
+     </div><!-- POS View -->
+     <div id="view-pos" class="fade-in hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
+       <div class="lg:col-span-2">
+        <div class="mb-4">
+         <h3 class="text-xs md:text-sm font-semibold mb-2 text-gold-500">Servicios</h3>
+         <div class="grid grid-cols-2 md:grid-cols-3 gap-2" id="pos-services">
+          <button onclick="addToCart('service','Corte Clásico',120)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="scissors" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i><p class="text-xs font-medium">Corte Clásico</p><p class="text-[9px] md:text-[10px] text-gold-500">$120</p></button> <button onclick="addToCart('service','Corte + Barba',180)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="scissors" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i><p class="text-xs font-medium">Corte + Barba</p><p class="text-[9px] md:text-[10px] text-gold-500">$180</p></button> <button onclick="addToCart('service','Fade Premium',220)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="scissors" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i><p class="text-xs font-medium">Fade Premium</p><p class="text-[9px] md:text-[10px] text-gold-500">$220</p></button> <button onclick="addToCart('service','Tinte',350)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="palette" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i><p class="text-xs font-medium">Tinte</p><p class="text-[9px] md:text-[10px] text-gold-500">$350</p></button> <button onclick="addToCart('service','Barba',80)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="scissors" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i><p class="text-xs font-medium">Barba</p><p class="text-[9px] md:text-[10px] text-gold-500">$80</p></button> <button onclick="addToCart('service','Lavado',60)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="droplets" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i><p class="text-xs font-medium">Lavado</p><p class="text-[9px] md:text-[10px] text-gold-500">$60</p></button>
+         </div>
+        </div>
+        <div>
+         <h3 class="text-xs md:text-sm font-semibold mb-2 text-gold-500">Productos</h3>
+         <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+          <button onclick="addToCart('product','Gel',90)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i><p class="text-xs font-medium">Gel</p><p class="text-[9px] md:text-[10px] text-gold-500">$90</p></button> <button onclick="addToCart('product','Cera',120)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i><p class="text-xs font-medium">Cera</p><p class="text-[9px] md:text-[10px] text-gold-500">$120</p></button> <button onclick="addToCart('product','Shampoo',150)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i><p class="text-xs font-medium">Shampoo</p><p class="text-[9px] md:text-[10px] text-gold-500">$150</p></button> <button onclick="addToCart('product','Pomada',110)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i><p class="text-xs font-medium">Pomada</p><p class="text-[9px] md:text-[10px] text-gold-500">$110</p></button> <button onclick="addToCart('product','Aceite Barba',180)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i><p class="text-xs font-medium">Aceite Barba</p><p class="text-[9px] md:text-[10px] text-gold-500">$180</p></button>
+         </div>
+        </div>
+       </div><!-- Cart -->
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 flex flex-col h-fit lg:h-auto lg:max-h-96">
+        <h3 class="font-semibold text-xs md:text-sm mb-2">🧾 Ticket</h3>
+        <div class="mb-3">
+         <label class="text-[9px] md:text-[10px] text-dark-400">Cliente</label> <input id="pos-client" type="text" placeholder="Nombre" class="w-full rounded-lg px-3 py-1.5 text-xs mt-1"> <label class="text-[9px] md:text-[10px] text-dark-400 mt-2 block">Barbero</label> <select id="pos-employee" class="w-full rounded-lg px-3 py-1.5 text-xs mt-1"> <option>Carlos</option> <option>Miguel</option> <option>Jesús</option> </select>
+        </div>
+        <div id="cart-items" class="flex-1 overflow-y-auto space-y-1 mb-3 min-h-[80px] md:min-h-[100px]"></div>
+        <div class="border-t border-dark-600 pt-3 space-y-1">
+         <div class="flex justify-between text-[9px] md:text-xs"><span>Subtotal</span><span id="cart-subtotal">$0</span>
+         </div>
+         <div class="flex justify-between text-[9px] md:text-xs"><span>IVA (16%)</span><span id="cart-tax">$0</span>
+         </div>
+         <div class="flex justify-between font-bold text-gold-500"><span>Total</span><span id="cart-total">$0</span>
+         </div>
+        </div><button onclick="processSale()" class="mt-3 w-full bg-gold-500 text-dark-900 font-bold py-2 md:py-2.5 rounded-lg text-xs hover:bg-gold-400 transition">Cobrar</button>
+       </div>
+      </div>
+     </div><!-- Clients View -->
+     <div id="view-clients" class="fade-in hidden">
+      <div class="flex justify-between items-center mb-4">
+       <h3 class="text-xs md:text-sm font-semibold">Clientes</h3><button onclick="showClientForm()" class="bg-gold-500 text-dark-900 px-2 md:px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gold-400 flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i><span class="hidden sm:inline">Nuevo</span></button>
+      </div>
+      <div id="client-form" class="hidden bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 mb-4">
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+        <div><label class="text-[9px] md:text-[10px] text-dark-400">Nombre</label><input id="cl-name" type="text" class="w-full rounded-lg px-3 py-1.5 text-xs mt-1">
+        </div>
+        <div><label class="text-[9px] md:text-[10px] text-dark-400">Teléfono</label><input id="cl-phone" type="text" class="w-full rounded-lg px-3 py-1.5 text-xs mt-1">
+        </div>
+       </div>
+       <div class="flex gap-2 mt-3">
+        <button onclick="saveClient()" class="bg-gold-500 text-dark-900 px-3 md:px-4 py-1.5 rounded-lg text-xs font-semibold">Guardar</button> <button onclick="document.getElementById('client-form').classList.add('hidden')" class="bg-dark-600 px-3 md:px-4 py-1.5 rounded-lg text-xs">Cancelar</button>
+       </div>
+      </div>
+      <div id="clients-list" class="space-y-2"></div>
+     </div><!-- Services View -->
+     <div id="view-services" class="fade-in hidden">
+      <h3 class="text-xs md:text-sm font-semibold mb-4">Servicios</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        <div class="flex items-center gap-3 mb-2">
+         <div class="w-8 md:w-10 h-8 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center"><i data-lucide="scissors" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i>
+         </div>
+         <div>
+          <p class="text-xs md:text-sm font-semibold">Corte Clásico</p>
+          <p class="text-[9px] md:text-[10px] text-dark-400">30 min</p>
+         </div>
+        </div>
+        <p class="text-gold-500 font-bold">$120</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        <div class="flex items-center gap-3 mb-2">
+         <div class="w-8 md:w-10 h-8 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center"><i data-lucide="scissors" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i>
+         </div>
+         <div>
+          <p class="text-xs md:text-sm font-semibold">Corte + Barba</p>
+          <p class="text-[9px] md:text-[10px] text-dark-400">45 min</p>
+         </div>
+        </div>
+        <p class="text-gold-500 font-bold">$180</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        <div class="flex items-center gap-3 mb-2">
+         <div class="w-8 md:w-10 h-8 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center"><i data-lucide="scissors" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i>
+         </div>
+         <div>
+          <p class="text-xs md:text-sm font-semibold">Fade Premium</p>
+          <p class="text-[9px] md:text-[10px] text-dark-400">40 min</p>
+         </div>
+        </div>
+        <p class="text-gold-500 font-bold">$220</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        <div class="flex items-center gap-3 mb-2">
+         <div class="w-8 md:w-10 h-8 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center"><i data-lucide="palette" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i>
+         </div>
+         <div>
+          <p class="text-xs md:text-sm font-semibold">Tinte</p>
+          <p class="text-[9px] md:text-[10px] text-dark-400">60 min</p>
+         </div>
+        </div>
+        <p class="text-gold-500 font-bold">$350</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        <div class="flex items-center gap-3 mb-2">
+         <div class="w-8 md:w-10 h-8 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center"><i data-lucide="scissors" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i>
+         </div>
+         <div>
+          <p class="text-xs md:text-sm font-semibold">Barba</p>
+          <p class="text-[9px] md:text-[10px] text-dark-400">20 min</p>
+         </div>
+        </div>
+        <p class="text-gold-500 font-bold">$80</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        <div class="flex items-center gap-3 mb-2">
+         <div class="w-8 md:w-10 h-8 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center"><i data-lucide="droplets" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i>
+         </div>
+         <div>
+          <p class="text-xs md:text-sm font-semibold">Lavado</p>
+          <p class="text-[9px] md:text-[10px] text-dark-400">15 min</p>
+         </div>
+        </div>
+        <p class="text-gold-500 font-bold">$60</p>
+       </div>
+      </div>
+     </div><!-- Products View -->
+     <div id="view-products" class="fade-in hidden">
+      <h3 class="text-xs md:text-sm font-semibold mb-4">Productos</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        <div class="flex justify-between items-start">
+         <div>
+          <p class="text-xs md:text-sm font-semibold">Gel</p>
+          <p class="text-[9px] md:text-[10px] text-dark-400">Fijación fuerte</p>
+         </div><span class="text-[8px] md:text-[10px] bg-green-400/10 text-green-400 px-2 py-0.5 rounded">Stock: 24</span>
+        </div>
+        <p class="text-gold-500 font-bold mt-2">$90</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        <div class="flex justify-between items-start">
+         <div>
+          <p class="text-xs md:text-sm font-semibold">Cera</p>
+          <p class="text-[9px] md:text-[10px] text-dark-400">Acabado mate</p>
+         </div><span class="text-[8px] md:text-[10px] bg-green-400/10 text-green-400 px-2 py-0.5 rounded">Stock: 18</span>
+        </div>
+        <p class="text-gold-500 font-bold mt-2">$120</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        <div class="flex justify-between items-start">
+         <div>
+          <p class="text-xs md:text-sm font-semibold">Shampoo</p>
+          <p class="text-[9px] md:text-[10px] text-dark-400">Anti-caspa</p>
+         </div><span class="text-[8px] md:text-[10px] bg-yellow-400/10 text-yellow-400 px-2 py-0.5 rounded">Stock: 5</span>
+        </div>
+        <p class="text-gold-500 font-bold mt-2">$150</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        <div class="flex justify-between items-start">
+         <div>
+          <p class="text-xs md:text-sm font-semibold">Pomada</p>
+          <p class="text-[9px] md:text-[10px] text-dark-400">Brillo natural</p>
+         </div><span class="text-[8px] md:text-[10px] bg-green-400/10 text-green-400 px-2 py-0.5 rounded">Stock: 15</span>
+        </div>
+        <p class="text-gold-500 font-bold mt-2">$110</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        <div class="flex justify-between items-start">
+         <div>
+          <p class="text-xs md:text-sm font-semibold">Aceite para Barba</p>
+          <p class="text-[9px] md:text-[10px] text-dark-400">Hidratante</p>
+         </div><span class="text-[8px] md:text-[10px] bg-red-400/10 text-red-400 px-2 py-0.5 rounded">Stock: 3</span>
+        </div>
+        <p class="text-gold-500 font-bold mt-2">$180</p>
+       </div>
+      </div>
+     </div><!-- Employees View -->
+     <div id="view-employees" class="fade-in hidden">
+      <h3 class="text-xs md:text-sm font-semibold mb-4">Empleados</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 text-center">
+        <div class="w-12 md:w-16 h-12 md:h-16 rounded-full bg-gradient-to-br from-gold-500 to-gold-700 mx-auto mb-2 md:mb-3 flex items-center justify-center text-dark-900 font-bold text-lg md:text-xl font-display">
+         C
+        </div>
+        <p class="font-semibold text-xs md:text-sm">Carlos López</p>
+        <p class="text-[9px] md:text-[10px] text-dark-400 mb-2 md:mb-3">Barbero Senior</p>
+        <div class="grid grid-cols-2 gap-2 text-center">
+         <div>
+          <p class="text-xs md:text-sm font-bold text-gold-500" id="emp-carlos-sales">0</p>
+          <p class="text-[8px] md:text-[9px] text-dark-400">Servicios</p>
+         </div>
+         <div>
+          <p class="text-xs md:text-sm font-bold text-gold-500" id="emp-carlos-income">$0</p>
+          <p class="text-[8px] md:text-[9px] text-dark-400">Ingresos</p>
+         </div>
+        </div>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 text-center">
+        <div class="w-12 md:w-16 h-12 md:h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 mx-auto mb-2 md:mb-3 flex items-center justify-center text-white font-bold text-lg md:text-xl font-display">
+         M
+        </div>
+        <p class="font-semibold text-xs md:text-sm">Miguel Hernández</p>
+        <p class="text-[9px] md:text-[10px] text-dark-400 mb-2 md:mb-3">Barbero</p>
+        <div class="grid grid-cols-2 gap-2 text-center">
+         <div>
+          <p class="text-xs md:text-sm font-bold text-gold-500" id="emp-miguel-sales">0</p>
+          <p class="text-[8px] md:text-[9px] text-dark-400">Servicios</p>
+         </div>
+         <div>
+          <p class="text-xs md:text-sm font-bold text-gold-500" id="emp-miguel-income">$0</p>
+          <p class="text-[8px] md:text-[9px] text-dark-400">Ingresos</p>
+         </div>
+        </div>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 text-center">
+        <div class="w-12 md:w-16 h-12 md:h-16 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 mx-auto mb-2 md:mb-3 flex items-center justify-center text-white font-bold text-lg md:text-xl font-display">
+         J
+        </div>
+        <p class="font-semibold text-xs md:text-sm">Jesús Ramírez</p>
+        <p class="text-[9px] md:text-[10px] text-dark-400 mb-2 md:mb-3">Barbero Jr</p>
+        <div class="grid grid-cols-2 gap-2 text-center">
+         <div>
+          <p class="text-xs md:text-sm font-bold text-gold-500" id="emp-jesus-sales">0</p>
+          <p class="text-[8px] md:text-[9px] text-dark-400">Servicios</p>
+         </div>
+         <div>
+          <p class="text-xs md:text-sm font-bold text-gold-500" id="emp-jesus-income">$0</p>
+          <p class="text-[8px] md:text-[9px] text-dark-400">Ingresos</p>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div><!-- Finance View -->
+     <div id="view-finance" class="fade-in hidden">
+      <h3 class="text-xs md:text-sm font-semibold mb-4">Finanzas</h3>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 mb-4">
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
+        <p class="text-[9px] md:text-[10px] text-dark-400">Hoy</p>
+        <p class="text-base md:text-lg font-bold text-gold-500" id="fin-today">$0</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
+        <p class="text-[9px] md:text-[10px] text-dark-400">Semana</p>
+        <p class="text-base md:text-lg font-bold text-gold-500" id="fin-week">$0</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
+        <p class="text-[9px] md:text-[10px] text-dark-400">Mes</p>
+        <p class="text-base md:text-lg font-bold text-gold-500" id="fin-month">$0</p>
+       </div>
+       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
+        <p class="text-[9px] md:text-[10px] text-dark-400">Total</p>
+        <p class="text-base md:text-lg font-bold text-gold-500" id="fin-total">$0</p>
+       </div>
+      </div>
+      <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+       <h4 class="text-xs md:text-sm font-semibold mb-3">Historial</h4>
+       <div id="finance-history" class="space-y-2 text-xs"></div>
+      </div>
+     </div><!-- Tickets View -->
+     <div id="view-tickets" class="fade-in hidden">
+      <h3 class="text-xs md:text-sm font-semibold mb-4">Tickets</h3>
+      <div id="tickets-list" class="space-y-2 md:space-y-3"></div>
+     </div>
+    </div>
+   </main>
+  </div><!-- Toast -->
+  <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50"></div><!-- Ticket Modal -->
+  <div id="ticket-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+   <div class="bg-white text-dark-900 rounded-xl w-full max-w-sm p-4 md:p-6 max-h-[90%] overflow-y-auto">
+    <div id="ticket-content" class="text-center"></div><button onclick="closeTicketModal()" class="mt-4 w-full bg-dark-900 text-white py-2 rounded-lg text-xs md:text-sm font-semibold">Cerrar</button>
+   </div>
+  </div>
+  <script>
+    // Configuración
+    const config = {
+      business_name: 'Barbería Cochilocos',
+      business_address: 'Av. Principal #123, Centro',
+      business_phone: '(555) 123-4567'
+    };
+
+    let allData = [];
+    let cart = [];
+    let ticketCounter = 1000;
+    let currentCalendarDate = new Date();
+    let currentSalesCalendarDate = new Date();
+
+    // LocalStorage Functions
+    function saveData() {
+      localStorage.setItem('barberia_data', JSON.stringify(allData));
+    }
+
+    function loadData() {
+      const saved = localStorage.getItem('barberia_data');
+      if (saved) {
+        try {
+          allData = JSON.parse(saved);
+        } catch (e) {
+          console.error('Error loading data:', e);
+          allData = [];
+        }
+      }
+    }
+
+    function addRecord(record) {
+      if (allData.length >= 999) {
+        showToast('Límite de registros alcanzado', 'red');
+        return false;
+      }
+      record.id = Date.now().toString();
+      allData.push(record);
+      saveData();
+      updateAllViews();
+      return true;
+    }
+
+    function deleteRecord(id) {
+      const idx = allData.findIndex(r => r.id === id);
+      if (idx >= 0) {
+        allData.splice(idx, 1);
+        saveData();
+        updateAllViews();
+      }
+    }
+
+    function updateAllViews() {
+      updateDashboard();
+      updateAppointmentsList();
+      updateClientsList();
+      updateFinance();
+      updateEmployeeStats();
+      updateTicketsList();
+    }
+
+    function navigate(view) {
+      document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
+      document.getElementById('view-' + view).classList.remove('hidden');
+      document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+      document.querySelector(`[data-nav="${view}"]`)?.classList.add('active');
+      const titles = { dashboard:'Dashboard', pos:'POS', appointments:'Agenda', clients:'Clientes', services:'Servicios', products:'Productos', employees:'Empleados', finance:'Finanzas', tickets:'Tickets' };
+      document.getElementById('page-title').textContent = titles[view] || '';
+      document.getElementById('sidebar').classList.add('-translate-x-full');
+      if (view === 'appointments') renderCalendar();
+      if (view === 'dashboard') renderSalesCalendar();
+    }
+
+    function toggleSidebar() {
+      const s = document.getElementById('sidebar');
+      s.classList.toggle('-translate-x-full');
+    }
+
+    function addToCart(type, name, price) {
+      const existing = cart.find(i => i.name === name);
+      if (existing) existing.qty++; else cart.push({type, name, price, qty:1});
+      renderCart();
+    }
+
+    function removeFromCart(index) { cart.splice(index,1); renderCart(); }
+
+    function renderCart() {
+      const container = document.getElementById('cart-items');
+      container.innerHTML = cart.length === 0 ? '<p class="text-[10px] md:text-[11px] text-dark-400 text-center py-3 md:py-4">Carrito vacío</p>' :
+        cart.map((item,i) => `<div class="flex justify-between items-center bg-dark-700 rounded-lg px-2 md:px-3 py-1.5 md:py-2">
+          <div><p class="text-[10px] md:text-[11px] font-medium">${item.name} x${item.qty}</p><p class="text-[8px] md:text-[9px] text-dark-400">${item.type === 'service' ? 'Servicio' : 'Producto'}</p></div>
+          <div class="flex items-center gap-1 md:gap-2"><span class="text-[10px] md:text-[11px] text-gold-500 font-medium">$${item.price * item.qty}</span>
+          <button onclick="removeFromCart(${i})" class="text-red-400 hover:text-red-300"><i data-lucide="x" class="w-3 h-3"></i></button></div>
+        </div>`).join('');
+      const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
+      const tax = Math.round(subtotal * 0.16);
+      document.getElementById('cart-subtotal').textContent = '$' + subtotal;
+      document.getElementById('cart-tax').textContent = '$' + tax;
+      document.getElementById('cart-total').textContent = '$' + (subtotal + tax);
+      lucide.createIcons();
+    }
+
+    function processSale() {
+      if (cart.length === 0) { showToast('Agrega items', 'red'); return; }
+      const client = document.getElementById('pos-client').value || 'Cliente General';
+      const employee = document.getElementById('pos-employee').value;
+      const total = cart.reduce((s,i) => s + i.price * i.qty, 0);
+      ticketCounter++;
+
+      for (const item of cart) {
+        if (!addRecord({
+          type: item.type === 'service' ? 'sale_service' : 'sale_product',
+          client_name: client,
+          client_phone: '',
+          service: item.type === 'service' ? item.name : '',
+          product: item.type === 'product' ? item.name : '',
+          employee: employee,
+          amount: item.price * item.qty,
+          date: new Date().toISOString(),
+          status: 'completed',
+          notes: 'Ticket #' + ticketCounter,
+          quantity: item.qty
+        })) return;
+      }
+
+      showTicket(client, employee, cart, total);
+      cart = [];
+      renderCart();
+      document.getElementById('pos-client').value = '';
+      showToast('¡Venta guardada!');
+    }
+
+    function renderCalendar() {
+      const year = currentCalendarDate.getFullYear();
+      const month = currentCalendarDate.getMonth();
+      const today = new Date();
+      const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      document.getElementById('calendar-month').textContent = `${monthNames[month]} ${year}`;
+      
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const daysInPrevMonth = new Date(year, month, 0).getDate();
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+      
+      const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+      for (let i = adjustedFirstDay - 1; i >= 0; i--) {
+        const day = daysInPrevMonth - i;
+        const dayEl = document.createElement('button');
+        dayEl.className = 'p-1.5 md:p-2 rounded-lg text-xs text-dark-500 bg-dark-700 cursor-default border border-dark-600';
+        dayEl.textContent = day;
+        dayEl.disabled = true;
+        grid.appendChild(dayEl);
+      }
+      
+      const appts = allData.filter(d => d.type === 'appointment').map(d => d.date?.split('T')[0]);
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const hasAppt = appts.includes(dateStr);
+        const isToday = dateStr === today.toISOString().split('T')[0];
+        const dayEl = document.createElement('button');
+        
+        if (isToday) {
+          dayEl.className = 'p-1.5 md:p-2 rounded-lg text-xs font-bold text-dark-900 bg-gold-500 border-2 border-gold-400 transition hover:bg-gold-400';
+        } else if (hasAppt) {
+          dayEl.className = 'p-1.5 md:p-2 rounded-lg text-xs font-bold text-white bg-blue-600 border-2 border-blue-500 transition hover:bg-blue-500';
+        } else {
+          dayEl.className = 'p-1.5 md:p-2 rounded-lg text-xs font-medium text-white bg-dark-700 border-2 border-dark-600 transition hover:border-gold-500 hover:bg-dark-600 cursor-pointer';
+        }
+        
+        dayEl.textContent = day;
+        dayEl.onclick = () => selectCalendarDate(year, month, day);
+        grid.appendChild(dayEl);
+      }
+      
+      const totalCells = grid.children.length;
+      const remainingCells = 42 - totalCells;
+      for (let day = 1; day <= remainingCells; day++) {
+        const dayEl = document.createElement('button');
+        dayEl.className = 'p-1.5 md:p-2 rounded-lg text-xs text-dark-500 bg-dark-700 cursor-default border border-dark-600';
+        dayEl.textContent = day;
+        dayEl.disabled = true;
+        grid.appendChild(dayEl);
+      }
+    }
+
+    function prevMonth() { currentCalendarDate = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth() - 1, 1); renderCalendar(); }
+    function nextMonth() { currentCalendarDate = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth() + 1, 1); renderCalendar(); }
+
+    function selectCalendarDate(year, month, day) {
+      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      document.getElementById('apt-date').value = dateStr;
+      if (!document.getElementById('apt-time').value) document.getElementById('apt-time').value = '10:00';
+      renderCalendar();
+    }
+
+    function saveAppointment() {
+      const client = document.getElementById('apt-client').value;
+      const dateVal = document.getElementById('apt-date').value;
+      if (!client) { showToast('Ingresa nombre', 'red'); return; }
+      if (!dateVal) { showToast('Selecciona fecha', 'red'); return; }
+      if (addRecord({
+        type: 'appointment',
+        client_name: client,
+        client_phone: document.getElementById('apt-phone').value,
+        service: document.getElementById('apt-service').value,
+        product: '',
+        employee: document.getElementById('apt-employee').value,
+        amount: 0,
+        date: dateVal + 'T' + (document.getElementById('apt-time').value || '10:00'),
+        status: 'confirmed',
+        notes: document.getElementById('apt-notes').value,
+        quantity: 1
+      })) {
+        showToast('¡Cita guardada!');
+        document.getElementById('apt-client').value = '';
+        document.getElementById('apt-phone').value = '';
+        document.getElementById('apt-date').value = '';
+        document.getElementById('apt-notes').value = '';
+        renderCalendar();
+        updateAppointmentsList();
+      }
+    }
+
+    function updateAppointmentsList() {
+      const appts = allData.filter(d => d.type === 'appointment');
+      const container = document.getElementById('appointments-list');
+      if (appts.length === 0) { container.innerHTML = '<p class="text-xs text-dark-400 text-center py-6 md:py-8">Sin citas</p>'; return; }
+      container.innerHTML = appts.sort((a,b) => (b.date||'').localeCompare(a.date||'')).slice(0,20).map(a => {
+        const statusColors = { confirmed:'green', pending:'yellow', cancelled:'red', completed:'blue' };
+        const c = statusColors[a.status] || 'gray';
+        return `<div class="bg-dark-800 rounded-lg border border-dark-600 p-2 md:p-3 flex justify-between items-center hover:border-gold-500 transition">
+          <div><p class="text-xs md:text-sm font-medium">${a.client_name}</p><p class="text-[9px] md:text-[10px] text-dark-400">${a.service} • ${a.employee} • ${formatDate(a.date)}</p></div>
+          <span class="text-[8px] md:text-[10px] bg-${c}-400/10 text-${c}-400 px-2 py-0.5 rounded capitalize">${a.status}</span>
+        </div>`;
+      }).join('');
+      renderCalendar();
+    }
+
+    function showClientForm() { document.getElementById('client-form').classList.remove('hidden'); }
+
+    function saveClient() {
+      const name = document.getElementById('cl-name').value;
+      if (!name) { showToast('Ingresa nombre', 'red'); return; }
+      if (addRecord({
+        type: 'client', client_name: name, client_phone: document.getElementById('cl-phone').value,
+        service: '', product: '', employee: '', amount: 0, date: new Date().toISOString(),
+        status: 'active', notes: '', quantity: 0
+      })) {
+        showToast('Cliente agregado');
+        document.getElementById('client-form').classList.add('hidden');
+        document.getElementById('cl-name').value='';
+        document.getElementById('cl-phone').value='';
+      }
+    }
+
+    function updateClientsList() {
+      const clients = allData.filter(d => d.type === 'client');
+      const container = document.getElementById('clients-list');
+      if (clients.length === 0) { container.innerHTML = '<p class="text-xs text-dark-400 text-center py-6 md:py-8">Sin clientes</p>'; return; }
+      container.innerHTML = clients.map(c => `<div class="bg-dark-800 rounded-lg border border-dark-600 p-2 md:p-3 flex items-center gap-3">
+        <div class="w-7 md:w-8 h-7 md:h-8 rounded-full bg-gold-500/20 flex items-center justify-center text-gold-500 font-bold text-xs">${(c.client_name||'?')[0].toUpperCase()}</div>
+        <div><p class="text-xs md:text-sm font-medium">${c.client_name}</p><p class="text-[8px] md:text-[9px] text-dark-400">${c.client_phone || 'Sin teléfono'}</p></div>
+      </div>`).join('');
+    }
+
+    function updateDashboard() {
+      const today = new Date().toISOString().split('T')[0];
+      const sales = allData.filter(d => d.type?.startsWith('sale_'));
+      const todaySales = sales.filter(s => (s.date||'').startsWith(today));
+      const todayTotal = todaySales.reduce((s,i) => s + (i.amount||0), 0);
+      const todayAppts = allData.filter(d => d.type === 'appointment' && (d.date||'').startsWith(today)).length;
+      const todayClients = new Set(todaySales.map(s => s.client_name)).size;
+      const todayProducts = sales.filter(s => s.type === 'sale_product' && (s.date||'').startsWith(today)).reduce((s,i) => s+(i.quantity||0),0);
+
+      const payroll = 150 * 3;
+      const expenses = 300;
+      const profit = todayTotal - payroll - expenses;
+
+      document.getElementById('stat-today').textContent = '$' + todayTotal.toLocaleString();
+      document.getElementById('stat-appointments').textContent = todayAppts;
+      document.getElementById('stat-clients').textContent = todayClients;
+      document.getElementById('stat-products').textContent = todayProducts;
+      document.getElementById('stat-payroll').textContent = '$' + payroll.toLocaleString();
+      document.getElementById('stat-expenses').textContent = '$' + expenses.toLocaleString();
+      document.getElementById('stat-profit').textContent = '$' + Math.max(0, profit).toLocaleString();
+
+      const chart = document.getElementById('weekly-chart');
+      const days = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+      const maxVal = Math.max(1, ...days.map((_,i) => todayTotal * (0.5 + Math.random())));
+      chart.innerHTML = days.map((d,i) => {
+        const val = Math.round(todayTotal * (0.3 + Math.random() * 0.7));
+        const h = Math.max(10, (val / (maxVal||1)) * 100);
+        return `<div class="flex-1 flex flex-col items-center gap-1"><div class="w-full bg-gold-500/80 rounded-t" style="height:${h}%"></div><span class="text-[8px] md:text-[9px] text-dark-400">${d}</span></div>`;
+      }).join('');
+
+      const serviceCounts = {};
+      sales.filter(s => s.type === 'sale_service').forEach(s => { serviceCounts[s.service] = (serviceCounts[s.service]||0) + (s.quantity||1); });
+      const ranked = Object.entries(serviceCounts).sort((a,b) => b[1]-a[1]).slice(0,5);
+      document.getElementById('services-ranking').innerHTML = ranked.length === 0 ? '<p class="text-[10px] md:text-[11px] text-dark-400">Sin datos</p>' :
+        ranked.map(([name,count],i) => `<div class="flex items-center gap-2"><span class="text-[9px] md:text-[10px] text-gold-500 font-bold w-4">${i+1}</span><span class="text-[10px] md:text-[11px] flex-1">${name}</span><span class="text-[9px] md:text-[10px] text-dark-400">${count}</span></div>`).join('');
+
+      renderSalesCalendar();
+    }
+
+    function updateFinance() {
+      const sales = allData.filter(d => d.type?.startsWith('sale_'));
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const weekAgo = new Date(now - 7*86400000).toISOString();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+      const todayTotal = sales.filter(s => (s.date||'').startsWith(today)).reduce((t,s) => t+(s.amount||0),0);
+      const weekTotal = sales.filter(s => (s.date||'') >= weekAgo).reduce((t,s) => t+(s.amount||0),0);
+      const monthTotal = sales.filter(s => (s.date||'') >= monthStart).reduce((t,s) => t+(s.amount||0),0);
+      const total = sales.reduce((t,s) => t+(s.amount||0),0);
+
+      document.getElementById('fin-today').textContent = '$' + todayTotal.toLocaleString();
+      document.getElementById('fin-week').textContent = '$' + weekTotal.toLocaleString();
+      document.getElementById('fin-month').textContent = '$' + monthTotal.toLocaleString();
+      document.getElementById('fin-total').textContent = '$' + total.toLocaleString();
+
+      document.getElementById('finance-history').innerHTML = sales.length === 0 ? '<p class="text-dark-400 text-xs">Sin ventas</p>' :
+        sales.sort((a,b) => (b.date||'').localeCompare(a.date||'')).slice(0,15).map(s =>
+          `<div class="flex justify-between items-center py-1 md:py-1.5 border-b border-dark-700 text-xs"><div><span class="font-medium">${s.service||s.product}</span><span class="text-dark-400 ml-2">${s.employee}</span></div><span class="text-gold-500">$${s.amount}</span></div>`
+        ).join('');
+    }
+
+    function updateEmployeeStats() {
+      const sales = allData.filter(d => d.type?.startsWith('sale_'));
+      ['Carlos','Miguel','Jesús'].forEach(emp => {
+        const empSales = sales.filter(s => s.employee === emp);
+        const key = emp.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        const sEl = document.getElementById('emp-'+key+'-sales');
+        const iEl = document.getElementById('emp-'+key+'-income');
+        if (sEl) sEl.textContent = empSales.length;
+        if (iEl) iEl.textContent = '$' + empSales.reduce((t,s) => t+(s.amount||0),0).toLocaleString();
+      });
+    }
+
+    function updateTicketsList() {
+      const sales = allData.filter(d => d.type?.startsWith('sale_') && d.notes?.startsWith('Ticket'));
+      const grouped = {};
+      sales.forEach(s => { const t = s.notes; if(!grouped[t]) grouped[t]=[]; grouped[t].push(s); });
+      const container = document.getElementById('tickets-list');
+      const tickets = Object.entries(grouped).sort((a,b) => b[0].localeCompare(a[0])).slice(0,10);
+      container.innerHTML = tickets.length === 0 ? '<p class="text-xs text-dark-400 text-center py-6 md:py-8">Sin tickets</p>' :
+        tickets.map(([ticket, items]) => {
+          const total = items.reduce((t,i) => t+(i.amount||0),0);
+          return `<div class="bg-dark-800 rounded-lg border border-dark-600 p-2 md:p-3"><div class="flex justify-between"><span class="text-xs md:text-sm font-medium text-gold-500">${ticket}</span><span class="text-xs md:text-sm font-bold">$${total}</span></div><p class="text-[8px] md:text-[9px] text-dark-400 mt-1">${items[0]?.client_name} • ${items[0]?.employee} • ${formatDate(items[0]?.date)}</p></div>`;
+        }).join('');
+    }
+
+    function renderSalesCalendar() {
+      const year = currentSalesCalendarDate.getFullYear();
+      const month = currentSalesCalendarDate.getMonth();
+      const sales = allData.filter(d => d.type?.startsWith('sale_'));
+      
+      const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      document.getElementById('sales-month-display').textContent = `${monthNames[month]} ${year}`;
+      
+      const salesByDate = {};
+      sales.forEach(s => {
+        const date = (s.date || '').split('T')[0];
+        if (date) salesByDate[date] = (salesByDate[date] || 0) + (s.amount || 0);
+      });
+      
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const daysInPrevMonth = new Date(year, month, 0).getDate();
+      
+      const grid = document.getElementById('sales-calendar-grid');
+      grid.innerHTML = '';
+      
+      const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+      for (let i = adjustedFirstDay - 1; i >= 0; i--) {
+        const day = daysInPrevMonth - i;
+        const dayEl = document.createElement('div');
+        dayEl.className = 'p-2 md:p-3 rounded-lg text-xs text-center text-dark-500 bg-dark-700 border border-dark-600 cursor-default';
+        dayEl.textContent = day;
+        grid.appendChild(dayEl);
+      }
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const daySales = salesByDate[dateStr] || 0;
+        const dayEl = document.createElement('div');
+        
+        let bgClass = 'bg-dark-700 border-dark-600';
+        if (daySales === 0) {
+          bgClass = 'bg-dark-700 border-dark-600';
+        } else if (daySales < 500) {
+          bgClass = 'bg-blue-900 border-blue-800';
+        } else if (daySales < 1000) {
+          bgClass = 'bg-blue-600 border-blue-500';
+        } else {
+          bgClass = 'bg-gold-600 border-gold-500';
+        }
+        
+        dayEl.className = `p-2 md:p-3 rounded-lg text-center border cursor-pointer transition hover:border-gold-400 ${bgClass}`;
+        dayEl.innerHTML = `<div class="text-xs font-bold text-white">${day}</div><div class="text-[9px] md:text-[10px] text-gold-300 font-medium">$${daySales}</div>`;
+        grid.appendChild(dayEl);
+      }
+      
+      const totalCells = grid.children.length;
+      const remainingCells = 42 - totalCells;
+      for (let day = 1; day <= remainingCells; day++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'p-2 md:p-3 rounded-lg text-xs text-center text-dark-500 bg-dark-700 border border-dark-600 cursor-default';
+        dayEl.textContent = day;
+        grid.appendChild(dayEl);
+      }
+    }
+
+    function prevSalesMonth() { currentSalesCalendarDate = new Date(currentSalesCalendarDate.getFullYear(), currentSalesCalendarDate.getMonth() - 1, 1); renderSalesCalendar(); }
+    function nextSalesMonth() { currentSalesCalendarDate = new Date(currentSalesCalendarDate.getFullYear(), currentSalesCalendarDate.getMonth() + 1, 1); renderSalesCalendar(); }
+
+    function showTicket(client, employee, items, total) {
+      const tax = Math.round(total * 0.16);
+      const content = document.getElementById('ticket-content');
+      content.innerHTML = `
+        <div class="border-b pb-3 mb-3">
+          <div class="w-10 md:w-12 h-10 md:h-12 rounded-full bg-gradient-to-br from-yellow-600 to-yellow-800 mx-auto mb-2 flex items-center justify-center text-white font-bold text-lg md:text-xl">C</div>
+          <h3 class="font-bold text-xs md:text-sm">${config.business_name}</h3>
+          <p class="text-[9px] md:text-[10px] text-gray-500">${config.business_address}</p>
+          <p class="text-[9px] md:text-[10px] text-gray-500">Tel: ${config.business_phone}</p>
+        </div>
+        <div class="text-left text-[10px] md:text-[11px] space-y-1 mb-3">
+          <p><strong>Ticket:</strong> #${ticketCounter}</p>
+          <p><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-MX')}</p>
+          <p><strong>Cliente:</strong> ${client}</p>
+          <p><strong>Barbero:</strong> ${employee}</p>
+        </div>
+        <div class="border-t border-b py-2 mb-2 text-left">
+          ${items.map(i => `<div class="flex justify-between text-[10px] md:text-[11px] py-0.5"><span>${i.name} x${i.qty}</span><span>$${i.price*i.qty}</span></div>`).join('')}
+        </div>
+        <div class="text-left text-[10px] md:text-[11px] space-y-0.5">
+          <div class="flex justify-between"><span>Subtotal:</span><span>$${total}</span></div>
+          <div class="flex justify-between"><span>IVA (16%):</span><span>$${tax}</span></div>
+          <div class="flex justify-between font-bold text-base"><span>Total:</span><span>$${total+tax}</span></div>
+        </div>
+        <p class="text-[8px] md:text-[9px] text-gray-400 mt-3">¡Gracias por su preferencia!</p>
+      `;
+      document.getElementById('ticket-modal').classList.remove('hidden');
+    }
+
+    function closeTicketModal() { document.getElementById('ticket-modal').classList.add('hidden'); }
+
+    function formatDate(d) { if(!d) return ''; try { return new Date(d).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); } catch(e) { return d; } }
+
+    function showToast(msg, color='green') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `fixed bottom-4 right-4 bg-${color}-500 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-lg transition-all duration-300 z-50 transform translate-y-0 opacity-100`;
+      setTimeout(() => { t.classList.add('translate-y-20','opacity-0'); }, 2500);
+    }
+
+    // Initialize
+    loadData();
+    renderCart();
+    renderCalendar();
+    updateDashboard();
+    lucide.createIcons();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0f0eb90769512d0',t:'MTc4MjAyMjk2MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

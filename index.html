@@ -1,12 +1,13 @@
 <!doctype html>
 <html lang="es" class="h-full">
- <head><script src="/_sdk/telemetry_sdk.js"></script>
+ <head>
+  <script src="/_sdk/telemetry_sdk.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Barbería Cochilocos</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&amp;family=DM+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       theme: {
@@ -19,13 +20,21 @@
       }
     }
   </script>
-  <style>body { box-sizing: border-box; }</style>
+  <style>
+    body { box-sizing: border-box; }
+    /* Estilos para ocultar todo excepto el ticket al imprimir */
+    @media print {
+      body * { visibility: hidden; }
+      #ticket-modal, #ticket-modal * { visibility: visible; color: black !important; }
+      #ticket-modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; width: 100%; background: white; align-items: flex-start; justify-content: flex-start; }
+      .no-print { display: none !important; }
+    }
+  </style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
   <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
  </head>
  <body class="h-full bg-dark-900 text-white overflow-hidden">
   <div id="app" class="h-full w-full flex">
-   <!-- Sidebar -->
    <aside id="sidebar" class="w-64 bg-dark-800 border-r border-dark-600 flex-shrink-0 flex flex-col h-full transition-all duration-300 lg:relative fixed z-50 -translate-x-full lg:translate-x-0">
     <div class="p-5 border-b border-dark-600">
      <div class="flex items-center gap-3">
@@ -51,9 +60,7 @@
       </div>
      </div>
     </div>
-   </aside><!-- Main -->
-   <main class="flex-1 flex flex-col h-full overflow-hidden">
-    <!-- Header -->
+   </aside><main class="flex-1 flex flex-col h-full overflow-hidden">
     <header class="h-14 bg-dark-800 border-b border-dark-600 flex items-center justify-between px-4 flex-shrink-0">
      <div class="flex items-center gap-3">
       <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-dark-700"><i data-lucide="menu" class="w-5 h-5"></i></button>
@@ -64,9 +71,7 @@
        <input type="text" placeholder="Buscar..." class="pl-8 pr-3 py-1.5 rounded-lg text-xs w-48"> <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-dark-400"></i>
       </div><button class="p-2 rounded-lg hover:bg-dark-700 relative"><i data-lucide="bell" class="w-4 h-4"></i><span class="absolute top-1 right-1 w-2 h-2 bg-gold-500 rounded-full"></span></button>
      </div>
-    </header><!-- Content -->
-    <div id="content" class="flex-1 overflow-y-auto p-3 md:p-6 scrollbar-hide">
-     <!-- Dashboard View -->
+    </header><div id="content" class="flex-1 overflow-y-auto p-3 md:p-6 scrollbar-hide">
      <div id="view-dashboard" class="fade-in">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
        <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 cursor-pointer hover:border-gold-500" onclick="navigate('pos')">
@@ -93,8 +98,7 @@
         <p class="text-base md:text-xl font-bold" id="stat-products">0</p>
         <p class="text-[10px] md:text-[11px] text-dark-400">Productos</p>
        </div>
-      </div><!-- KPI Row -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+      </div><div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
        <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
         <div class="flex items-center justify-between mb-2">
          <h3 class="text-xs md:text-sm font-semibold">Nómina</h3><i data-lucide="briefcase" class="w-3 md:w-4 h-3 md:h-4 text-green-400"></i>
@@ -116,35 +120,20 @@
         <p class="text-xl md:text-2xl font-bold text-gold-500" id="stat-profit">$0</p>
         <p class="text-[9px] md:text-[10px] text-dark-400 mt-1">Neta</p>
        </div>
-      </div><!-- Sales Calendar -->
-      <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 mb-4 md:mb-6">
+      </div><div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 mb-4 md:mb-6">
        <div class="flex items-center justify-between mb-4">
         <h3 class="text-xs md:text-sm font-semibold">Ventas del Mes</h3>
         <div class="flex items-center gap-2"><button onclick="prevSalesMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-left" class="w-3 md:w-4 h-3 md:h-4"></i></button><span id="sales-month-display" class="text-xs md:text-sm font-medium text-gold-500 min-w-[100px] text-center">Enero 2024</span><button onclick="nextSalesMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-right" class="w-3 md:w-4 h-3 md:h-4"></i></button>
         </div>
        </div>
        <div class="grid grid-cols-7 gap-1 md:gap-2 mb-2">
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-         Lun
-        </div>
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-         Mar
-        </div>
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-         Mié
-        </div>
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-         Jue
-        </div>
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-         Vie
-        </div>
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-         Sáb
-        </div>
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-         Dom
-        </div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Lun</div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Mar</div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Mié</div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Jue</div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Vie</div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Sáb</div>
+        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Dom</div>
        </div>
        <div id="sales-calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2 mb-3 md:mb-4"></div>
        <div class="flex flex-wrap gap-2 md:gap-4 text-[8px] md:text-[10px] pt-3 border-t border-dark-600">
@@ -161,8 +150,7 @@
          <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-gold-600"></div><span class="text-dark-400">$1000+</span>
         </div>
        </div>
-      </div><!-- Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+      </div><div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
        <div class="lg:col-span-2 bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
         <h3 class="font-semibold text-xs md:text-sm mb-3">Ventas de la Semana</h3>
         <div class="h-32 md:h-40 flex items-end gap-1 md:gap-2" id="weekly-chart"></div>
@@ -172,41 +160,24 @@
         <div id="services-ranking" class="space-y-2"></div>
        </div>
       </div>
-     </div><!-- Appointments View -->
-     <div id="view-appointments" class="fade-in hidden">
+     </div><div id="view-appointments" class="fade-in hidden">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
-       <!-- Calendar -->
        <div class="lg:col-span-2 bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
         <div class="flex items-center justify-between mb-4">
          <button onclick="prevMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
          <h3 class="text-xs md:text-sm font-semibold text-center flex-1" id="calendar-month">Enero 2024</h3><button onclick="nextMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
         </div>
         <div class="grid grid-cols-7 gap-1 md:gap-2 mb-2">
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-          Lun
-         </div>
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-          Mar
-         </div>
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-          Mié
-         </div>
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-          Jue
-         </div>
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-          Vie
-         </div>
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-          Sáb
-         </div>
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">
-          Dom
-         </div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Lun</div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Mar</div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Mié</div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Jue</div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Vie</div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Sáb</div>
+         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Dom</div>
         </div>
         <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2 mb-4"></div>
-       </div><!-- Form -->
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 h-fit">
+       </div><div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 h-fit">
         <h3 class="text-xs md:text-sm font-semibold mb-3">Nueva Cita</h3>
         <div class="space-y-2 md:space-y-3">
          <div>
@@ -232,13 +203,11 @@
          </div><button onclick="saveAppointment()" class="w-full bg-gold-500 text-dark-900 py-2 rounded-lg text-xs font-semibold hover:bg-gold-400 transition">Guardar</button>
         </div>
        </div>
-      </div><!-- Upcoming appointments -->
-      <div class="mt-4 bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+      </div><div class="mt-4 bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
        <h3 class="text-xs md:text-sm font-semibold mb-3">Próximas Citas</h3>
        <div id="appointments-list" class="space-y-2"></div>
       </div>
-     </div><!-- POS View -->
-     <div id="view-pos" class="fade-in hidden">
+     </div><div id="view-pos" class="fade-in hidden">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
        <div class="lg:col-span-2">
         <div class="mb-4">
@@ -249,173 +218,47 @@
         </div>
         <div>
          <h3 class="text-xs md:text-sm font-semibold mb-2 text-gold-500">Productos</h3>
-         <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-          <button onclick="addToCart('product','Gel',90)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i><p class="text-xs font-medium">Gel</p><p class="text-[9px] md:text-[10px] text-gold-500">$90</p></button> <button onclick="addToCart('product','Cera',120)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i><p class="text-xs font-medium">Cera</p><p class="text-[9px] md:text-[10px] text-gold-500">$120</p></button> <button onclick="addToCart('product','Shampoo',150)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i><p class="text-xs font-medium">Shampoo</p><p class="text-[9px] md:text-[10px] text-gold-500">$150</p></button> <button onclick="addToCart('product','Pomada',110)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i><p class="text-xs font-medium">Pomada</p><p class="text-[9px] md:text-[10px] text-gold-500">$110</p></button> <button onclick="addToCart('product','Aceite Barba',180)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i><p class="text-xs font-medium">Aceite Barba</p><p class="text-[9px] md:text-[10px] text-gold-500">$180</p></button>
+         <div class="grid grid-cols-2 md:grid-cols-3 gap-2" id="pos-dynamic-products">
          </div>
         </div>
-       </div><!-- Cart -->
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 flex flex-col h-fit lg:h-auto lg:max-h-96">
+       </div><div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 flex flex-col h-fit lg:h-auto lg:max-h-96">
         <h3 class="font-semibold text-xs md:text-sm mb-2">🧾 Ticket</h3>
         <div class="mb-3">
          <label class="text-[9px] md:text-[10px] text-dark-400">Cliente</label> <input id="pos-client" type="text" placeholder="Nombre" class="w-full rounded-lg px-3 py-1.5 text-xs mt-1"> <label class="text-[9px] md:text-[10px] text-dark-400 mt-2 block">Barbero</label> <select id="pos-employee" class="w-full rounded-lg px-3 py-1.5 text-xs mt-1"> <option>Carlos</option> <option>Miguel</option> <option>Jesús</option> </select>
         </div>
         <div id="cart-items" class="flex-1 overflow-y-auto space-y-1 mb-3 min-h-[80px] md:min-h-[100px]"></div>
+        
         <div class="border-t border-dark-600 pt-3 space-y-1">
-         <div class="flex justify-between text-[9px] md:text-xs"><span>Subtotal</span><span id="cart-subtotal">$0</span></div>
-         <div class="flex justify-between text-[9px] md:text-xs"><span>IVA (16%)</span><span id="cart-tax">$0</span></div>
-         <div class="flex justify-between font-bold text-gold-500"><span>Total</span><span id="cart-total">$0</span></div>
-         
-         <div class="flex justify-between items-center text-[9px] md:text-xs mt-2 pt-2 border-t border-dark-700">
-           <span>Efectivo Recibido</span>
-           <input id="pos-payment" type="number" min="0" placeholder="0.00" class="w-20 md:w-24 bg-dark-700 border border-dark-600 rounded px-2 py-1 text-right text-gold-500 font-bold focus:border-gold-500 outline-none" oninput="calculateChange()">
-         </div>
-         <div class="flex justify-between font-bold text-green-400 text-[9px] md:text-xs">
-           <span>Cambio</span>
-           <span id="cart-change">$0.00</span>
-         </div>
-        </div>  
-        </div><button onclick="processSale()" class="mt-3 w-full bg-gold-500 text-dark-900 font-bold py-2 md:py-2.5 rounded-lg text-xs hover:bg-gold-400 transition">Cobrar</button>
+          <div class="flex justify-between text-[9px] md:text-xs"><span>Subtotal</span><span id="cart-subtotal">$0</span></div>
+          <div class="flex justify-between text-[9px] md:text-xs"><span>IVA (16%)</span><span id="cart-tax">$0</span></div>
+          <div class="flex justify-between font-bold text-gold-500"><span>Total</span><span id="cart-total">$0</span></div>
+          
+          <div class="flex justify-between items-center text-[9px] md:text-xs mt-2 pt-2 border-t border-dark-700">
+            <span>Método</span>
+            <select id="pos-method" class="w-20 md:w-24 bg-dark-700 border border-dark-600 rounded px-1 py-1 text-gold-500 font-bold focus:border-gold-500 outline-none" onchange="calculateChange()">
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta">Tarjeta</option>
+              <option value="Transferencia">Transferencia</option>
+            </select>
+          </div>
+
+          <div class="flex justify-between items-center text-[9px] md:text-xs mt-1">
+            <span>Monto Recibido</span>
+            <input id="pos-payment" type="number" min="0" placeholder="0.00" class="w-20 md:w-24 bg-dark-700 border border-dark-600 rounded px-2 py-1 text-right text-gold-500 font-bold focus:border-gold-500 outline-none" oninput="calculateChange()">
+          </div>
+          <div class="flex justify-between font-bold text-green-400 text-[9px] md:text-xs mt-1">
+            <span>Cambio</span>
+            <span id="cart-change">$0.00</span>
+          </div>
+        </div>
+        <button onclick="processSale()" class="mt-3 w-full bg-gold-500 text-dark-900 font-bold py-2 md:py-2.5 rounded-lg text-xs hover:bg-gold-400 transition">Cobrar</button>
        </div>
       </div>
-     </div><!-- Clients View -->
-     <div id="view-clients" class="fade-in hidden">
-      <div class="flex justify-between items-center mb-4">
-       <h3 class="text-xs md:text-sm font-semibold">Clientes</h3><button onclick="showClientForm()" class="bg-gold-500 text-dark-900 px-2 md:px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gold-400 flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i><span class="hidden sm:inline">Nuevo</span></button>
+     </div><div id="view-products" class="fade-in hidden">
+      <h3 class="text-xs md:text-sm font-semibold mb-4">Inventario de Productos</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3" id="inventory-grid">
       </div>
-      <div id="client-form" class="hidden bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 mb-4">
-       <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-        <div><label class="text-[9px] md:text-[10px] text-dark-400">Nombre</label><input id="cl-name" type="text" class="w-full rounded-lg px-3 py-1.5 text-xs mt-1">
-        </div>
-        <div><label class="text-[9px] md:text-[10px] text-dark-400">Teléfono</label><input id="cl-phone" type="text" class="w-full rounded-lg px-3 py-1.5 text-xs mt-1">
-        </div>
-       </div>
-       <div class="flex gap-2 mt-3">
-        <button onclick="saveClient()" class="bg-gold-500 text-dark-900 px-3 md:px-4 py-1.5 rounded-lg text-xs font-semibold">Guardar</button> <button onclick="document.getElementById('client-form').classList.add('hidden')" class="bg-dark-600 px-3 md:px-4 py-1.5 rounded-lg text-xs">Cancelar</button>
-       </div>
-      </div>
-      <div id="clients-list" class="space-y-2"></div>
-     </div><!-- Services View -->
-     <div id="view-services" class="fade-in hidden">
-      <h3 class="text-xs md:text-sm font-semibold mb-4">Servicios</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-        <div class="flex items-center gap-3 mb-2">
-         <div class="w-8 md:w-10 h-8 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center"><i data-lucide="scissors" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i>
-         </div>
-         <div>
-          <p class="text-xs md:text-sm font-semibold">Corte Clásico</p>
-          <p class="text-[9px] md:text-[10px] text-dark-400">30 min</p>
-         </div>
-        </div>
-        <p class="text-gold-500 font-bold">$120</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-        <div class="flex items-center gap-3 mb-2">
-         <div class="w-8 md:w-10 h-8 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center"><i data-lucide="scissors" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i>
-         </div>
-         <div>
-          <p class="text-xs md:text-sm font-semibold">Corte + Barba</p>
-          <p class="text-[9px] md:text-[10px] text-dark-400">45 min</p>
-         </div>
-        </div>
-        <p class="text-gold-500 font-bold">$180</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-        <div class="flex items-center gap-3 mb-2">
-         <div class="w-8 md:w-10 h-8 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center"><i data-lucide="scissors" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i>
-         </div>
-         <div>
-          <p class="text-xs md:text-sm font-semibold">Fade Premium</p>
-          <p class="text-[9px] md:text-[10px] text-dark-400">40 min</p>
-         </div>
-        </div>
-        <p class="text-gold-500 font-bold">$220</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-        <div class="flex items-center gap-3 mb-2">
-         <div class="w-8 md:w-10 h-8 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center"><i data-lucide="palette" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i>
-         </div>
-         <div>
-          <p class="text-xs md:text-sm font-semibold">Tinte</p>
-          <p class="text-[9px] md:text-[10px] text-dark-400">60 min</p>
-         </div>
-        </div>
-        <p class="text-gold-500 font-bold">$350</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-        <div class="flex items-center gap-3 mb-2">
-         <div class="w-8 md:w-10 h-8 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center"><i data-lucide="scissors" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i>
-         </div>
-         <div>
-          <p class="text-xs md:text-sm font-semibold">Barba</p>
-          <p class="text-[9px] md:text-[10px] text-dark-400">20 min</p>
-         </div>
-        </div>
-        <p class="text-gold-500 font-bold">$80</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-        <div class="flex items-center gap-3 mb-2">
-         <div class="w-8 md:w-10 h-8 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center"><i data-lucide="droplets" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i>
-         </div>
-         <div>
-          <p class="text-xs md:text-sm font-semibold">Lavado</p>
-          <p class="text-[9px] md:text-[10px] text-dark-400">15 min</p>
-         </div>
-        </div>
-        <p class="text-gold-500 font-bold">$60</p>
-       </div>
-      </div>
-     </div><!-- Products View -->
-     <div id="view-products" class="fade-in hidden">
-      <h3 class="text-xs md:text-sm font-semibold mb-4">Productos</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-        <div class="flex justify-between items-start">
-         <div>
-          <p class="text-xs md:text-sm font-semibold">Gel</p>
-          <p class="text-[9px] md:text-[10px] text-dark-400">Fijación fuerte</p>
-         </div><span class="text-[8px] md:text-[10px] bg-green-400/10 text-green-400 px-2 py-0.5 rounded">Stock: 24</span>
-        </div>
-        <p class="text-gold-500 font-bold mt-2">$90</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-        <div class="flex justify-between items-start">
-         <div>
-          <p class="text-xs md:text-sm font-semibold">Cera</p>
-          <p class="text-[9px] md:text-[10px] text-dark-400">Acabado mate</p>
-         </div><span class="text-[8px] md:text-[10px] bg-green-400/10 text-green-400 px-2 py-0.5 rounded">Stock: 18</span>
-        </div>
-        <p class="text-gold-500 font-bold mt-2">$120</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-        <div class="flex justify-between items-start">
-         <div>
-          <p class="text-xs md:text-sm font-semibold">Shampoo</p>
-          <p class="text-[9px] md:text-[10px] text-dark-400">Anti-caspa</p>
-         </div><span class="text-[8px] md:text-[10px] bg-yellow-400/10 text-yellow-400 px-2 py-0.5 rounded">Stock: 5</span>
-        </div>
-        <p class="text-gold-500 font-bold mt-2">$150</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-        <div class="flex justify-between items-start">
-         <div>
-          <p class="text-xs md:text-sm font-semibold">Pomada</p>
-          <p class="text-[9px] md:text-[10px] text-dark-400">Brillo natural</p>
-         </div><span class="text-[8px] md:text-[10px] bg-green-400/10 text-green-400 px-2 py-0.5 rounded">Stock: 15</span>
-        </div>
-        <p class="text-gold-500 font-bold mt-2">$110</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-        <div class="flex justify-between items-start">
-         <div>
-          <p class="text-xs md:text-sm font-semibold">Aceite para Barba</p>
-          <p class="text-[9px] md:text-[10px] text-dark-400">Hidratante</p>
-         </div><span class="text-[8px] md:text-[10px] bg-red-400/10 text-red-400 px-2 py-0.5 rounded">Stock: 3</span>
-        </div>
-        <p class="text-gold-500 font-bold mt-2">$180</p>
-       </div>
-      </div>
-     </div><!-- Employees View -->
+     </div>
      <div id="view-employees" class="fade-in hidden">
       <h3 class="text-xs md:text-sm font-semibold mb-4">Empleados</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
@@ -471,8 +314,7 @@
         </div>
        </div>
       </div>
-     </div><!-- Finance View -->
-     <div id="view-finance" class="fade-in hidden">
+     </div><div id="view-finance" class="fade-in hidden">
       <h3 class="text-xs md:text-sm font-semibold mb-4">Finanzas</h3>
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 mb-4">
        <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
@@ -496,26 +338,18 @@
        <h4 class="text-xs md:text-sm font-semibold mb-3">Historial</h4>
        <div id="finance-history" class="space-y-2 text-xs"></div>
       </div>
-     </div><!-- Tickets View -->
-     <div id="view-tickets" class="fade-in hidden">
+     </div><div id="view-tickets" class="fade-in hidden">
       <h3 class="text-xs md:text-sm font-semibold mb-4">Tickets</h3>
       <div id="tickets-list" class="space-y-2 md:space-y-3"></div>
      </div>
     </div>
    </main>
-  </div><!-- Toast -->
-  <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50"></div><!-- Ticket Modal -->
-  <div id="ticket-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+  </div><div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50"></div><div id="ticket-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
    <div class="bg-white text-dark-900 rounded-xl w-full max-w-sm p-4 md:p-6 max-h-[90%] overflow-y-auto">
-    <div id="ticket-content" class="text-center"></div><button onclick="closeTicketModal()" class="mt-4 w-full bg-dark-900 text-white py-2 rounded-lg text-xs md:text-sm font-semibold">Cerrar</button>
+    <div id="ticket-content" class="text-center"></div>
    </div>
   </div>
   <script>
-
-
-
-
-
     // Configuración
     const config = {
       business_name: 'Barbería Cochilocos',
@@ -528,6 +362,76 @@
     let ticketCounter = 1000;
     let currentCalendarDate = new Date();
     let currentSalesCalendarDate = new Date();
+
+    // Inventario dinámico
+    let inventory = {
+      'Gel': { price: 90, stock: 24, desc: 'Fijación fuerte' },
+      'Cera': { price: 120, stock: 18, desc: 'Acabado mate' },
+      'Shampoo': { price: 150, stock: 5, desc: 'Anti-caspa' },
+      'Pomada': { price: 110, stock: 15, desc: 'Brillo natural' },
+      'Aceite Barba': { price: 180, stock: 3, desc: 'Hidratante' }
+    };
+
+    // Función para renderizar los productos en POS y en Inventario
+    function renderDynamicProducts() {
+      const posGrid = document.getElementById('pos-dynamic-products');
+      const invGrid = document.getElementById('inventory-grid');
+      
+      let posHTML = '';
+      let invHTML = '';
+
+      Object.keys(inventory).forEach(key => {
+        const p = inventory[key];
+        
+        // Render POS
+        posHTML += `<button onclick="addToCart('product','${key}',${p.price})" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition relative overflow-hidden">
+          <i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i>
+          <p class="text-xs font-medium">${key}</p>
+          <p class="text-[9px] md:text-[10px] text-gold-500">$${p.price}</p>
+          <span class="absolute top-1 right-1 text-[8px] bg-dark-700 px-1 rounded text-dark-300">Stock: ${p.stock}</span>
+        </button>`;
+
+        // Render Inventario (Con botones de Entradas y Salidas)
+        invHTML += `<div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+          <div class="flex justify-between items-start">
+           <div>
+            <p class="text-xs md:text-sm font-semibold">${key}</p>
+            <p class="text-[9px] md:text-[10px] text-dark-400">${p.desc}</p>
+           </div>
+           <span class="text-[8px] md:text-[10px] ${p.stock < 5 ? 'bg-red-400/10 text-red-400' : 'bg-green-400/10 text-green-400'} px-2 py-0.5 rounded font-bold">Stock: ${p.stock}</span>
+          </div>
+          <p class="text-gold-500 font-bold mt-2 mb-3">$${p.price}</p>
+          <div class="flex gap-2">
+            <button onclick="adjustStock('${key}')" class="flex-1 bg-dark-700 hover:bg-dark-600 text-[9px] md:text-[10px] py-1.5 rounded transition">+/- Stock</button>
+            <button onclick="editProductPrice('${key}')" class="flex-1 bg-dark-700 hover:bg-dark-600 text-[9px] md:text-[10px] py-1.5 rounded transition">Editar Precio</button>
+          </div>
+         </div>`;
+      });
+
+      if(posGrid) posGrid.innerHTML = posHTML;
+      if(invGrid) invGrid.innerHTML = invHTML;
+      if(window.lucide) lucide.createIcons();
+    }
+
+    // Lógica de Entradas y Salidas
+    function adjustStock(name) {
+      const val = prompt(`Stock actual de ${name}: ${inventory[name].stock}\nIntroduce cantidad a SUMAR (o usa un número con guión - para RESTAR):`);
+      if (val !== null && val.trim() !== '' && !isNaN(val)) {
+        inventory[name].stock += parseInt(val);
+        if(inventory[name].stock < 0) inventory[name].stock = 0; // No permitir negativos
+        renderDynamicProducts();
+        showToast(`Stock de ${name} actualizado`);
+      }
+    }
+
+    function editProductPrice(name) {
+      const val = prompt(`Precio actual de ${name}: $${inventory[name].price}\nIntroduce NUEVO PRECIO:`);
+      if (val !== null && val.trim() !== '' && !isNaN(val) && val > 0) {
+        inventory[name].price = parseFloat(val);
+        renderDynamicProducts(); // Actualizar el precio en los botones
+        showToast(`Precio de ${name} actualizado`);
+      }
+    }
 
     // LocalStorage Functions
     function saveData() {
@@ -593,23 +497,46 @@
       s.classList.toggle('-translate-x-full');
     }
 
+    // --- NUEVAS FUNCIONES ACTUALIZADAS DE POS ---
+    
     function addToCart(type, name, price) {
       const existing = cart.find(i => i.name === name);
+      
+      // Bloqueo por falta de stock
+      if (type === 'product') {
+        const currentStock = inventory[name]?.stock || 0;
+        const requestedQty = existing ? existing.qty + 1 : 1;
+        if (requestedQty > currentStock) {
+          showToast(`Stock insuficiente. Solo quedan ${currentStock} de ${name}`, 'red');
+          return;
+        }
+      }
+
       if (existing) existing.qty++; else cart.push({type, name, price, qty:1});
       renderCart();
     }
-
-    function removeFromCart(index) { cart.splice(index,1); renderCart(); }
-
 
     function calculateChange() {
       const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
       const tax = Math.round(subtotal * 0.16);
       const total = subtotal + tax;
       
+      const method = document.getElementById('pos-method')?.value || 'Efectivo';
       const paymentInput = document.getElementById('pos-payment');
       const changeEl = document.getElementById('cart-change');
+      
       if (!paymentInput || !changeEl) return;
+
+      // Si es tarjeta/transferencia, inhabilitar input o forzar pago total
+      if(method !== 'Efectivo') {
+        paymentInput.value = total;
+        paymentInput.disabled = true;
+        changeEl.textContent = '$0.00';
+        changeEl.className = 'text-dark-400 font-bold text-[9px] md:text-xs';
+        return;
+      } else {
+        paymentInput.disabled = false;
+      }
 
       const payment = parseFloat(paymentInput.value) || 0;
 
@@ -627,8 +554,147 @@
       }
     }
 
+    function processSale() {
+      if (cart.length === 0) { showToast('Agrega items', 'red'); return; }
 
-    
+      const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
+      const tax = Math.round(subtotal * 0.16);
+      const finalTotal = subtotal + tax;
+      
+      const method = document.getElementById('pos-method').value;
+      const paymentInputVal = document.getElementById('pos-payment').value;
+      const payment = method === 'Efectivo' ? (parseFloat(paymentInputVal) || 0) : finalTotal;
+
+      // Validar efectivo
+      if (method === 'Efectivo' && payment < finalTotal) {
+        showToast('Efectivo insuficiente', 'red');
+        return;
+      }
+
+      const change = method === 'Efectivo' ? payment - finalTotal : 0;
+      const client = document.getElementById('pos-client').value || 'Cliente General';
+      const employee = document.getElementById('pos-employee').value;
+      ticketCounter++;
+
+      for (const item of cart) {
+        // RESTAR STOCK SI ES PRODUCTO
+        if(item.type === 'product' && inventory[item.name]) {
+          inventory[item.name].stock -= item.qty;
+        }
+
+        if (!addRecord({
+          type: item.type === 'service' ? 'sale_service' : 'sale_product',
+          client_name: client,
+          client_phone: '',
+          service: item.type === 'service' ? item.name : '',
+          product: item.type === 'product' ? item.name : '',
+          employee: employee,
+          amount: item.price * item.qty,
+          date: new Date().toISOString(),
+          status: 'completed',
+          notes: `Ticket #${ticketCounter} - ${method}`,
+          quantity: item.qty
+        })) return;
+      }
+
+      renderDynamicProducts(); // Actualizar UI de productos (refresca stock en pantalla)
+      showTicket(client, employee, cart, subtotal, payment, change, method);
+      
+      cart = [];
+      renderCart();
+      document.getElementById('pos-client').value = '';
+      if(document.getElementById('pos-payment')) document.getElementById('pos-payment').value = '';
+      calculateChange(); 
+      showToast('¡Venta completada!');
+    }
+
+    // Ticket Formato Térmico
+    function showTicket(client, employee, items, subtotal, payment, change, method) {
+      const tax = Math.round(subtotal * 0.16);
+      const finalTotal = subtotal + tax;
+      const content = document.getElementById('ticket-content');
+      
+      // Diseño simulando impresora térmica
+      content.innerHTML = `
+        <div style="font-family: 'Courier New', Courier, monospace; width: 100%; max-width: 320px; margin: 0 auto; color: black; background: white; padding: 20px 10px; border: 1px solid #eee;">
+          
+          <div style="text-align: center; margin-bottom: 15px;">
+            <h2 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">${config.business_name}</h2>
+            <p style="font-size: 12px; margin: 2px 0;">${config.business_address}</p>
+            <p style="font-size: 12px; margin: 2px 0;">Tel: ${config.business_phone}</p>
+            <div style="border-top: 1px dashed black; margin: 10px 0;"></div>
+          </div>
+          
+          <div style="font-size: 12px; margin-bottom: 15px; text-align: left;">
+            <p style="margin: 2px 0;"><strong>Ticket:</strong> #${ticketCounter}</p>
+            <p style="margin: 2px 0;"><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-MX')} ${new Date().toLocaleTimeString('es-MX')}</p>
+            <p style="margin: 2px 0;"><strong>Atendió:</strong> ${employee}</p>
+            <p style="margin: 2px 0;"><strong>Cliente:</strong> ${client}</p>
+            <div style="border-top: 1px dashed black; margin: 10px 0;"></div>
+          </div>
+
+          <div style="font-size: 12px; margin-bottom: 15px;">
+            <table style="width: 100%; text-align: left; border-collapse: collapse;">
+              <thead>
+                <tr>
+                  <th style="padding-bottom: 5px; width: 10%;">Cant</th>
+                  <th style="padding-bottom: 5px; width: 60%;">Desc</th>
+                  <th style="padding-bottom: 5px; text-align: right;">Importe</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map(i => `<tr>
+                  <td style="vertical-align: top; padding: 2px 0;">${i.qty}</td>
+                  <td style="vertical-align: top; padding: 2px 0;">${i.name}</td>
+                  <td style="vertical-align: top; text-align: right; padding: 2px 0;">$${(i.price*i.qty).toFixed(2)}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <div style="border-top: 1px dashed black; padding-top: 10px; font-size: 12px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>Subtotal:</span><span>$${subtotal.toFixed(2)}</span></div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>IVA (16%):</span><span>$${tax.toFixed(2)}</span></div>
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-top: 5px;"><span>TOTAL:</span><span>$${finalTotal.toFixed(2)}</span></div>
+          </div>
+
+          <div style="border-top: 1px dashed black; padding-top: 10px; font-size: 12px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>PAGÓ CON (${method}):</span><span>$${payment.toFixed(2)}</span></div>
+            <div style="display: flex; justify-content: space-between; font-weight: bold;"><span>SU CAMBIO:</span><span>$${change.toFixed(2)}</span></div>
+          </div>
+
+          <div style="text-align: center; font-size: 11px; margin-top: 20px;">
+            <p style="margin: 0;">*** GRACIAS POR SU PREFERENCIA ***</p>
+          </div>
+        </div>
+      `;
+      
+      // Inyectar o actualizar botones del modal para poder imprimir
+      let modalActions = document.getElementById('ticket-actions');
+      if(!modalActions) {
+        modalActions = document.createElement('div');
+        modalActions.id = 'ticket-actions';
+        modalActions.className = 'flex gap-2 mt-4 no-print';
+        document.getElementById('ticket-content').parentNode.appendChild(modalActions);
+        
+        // Quitar el botón viejo de cerrar que tenías antes
+        const oldBtn = document.querySelector('#ticket-modal > div > button:last-child');
+        if(oldBtn && oldBtn.id !== 'ticket-actions') oldBtn.remove();
+      }
+
+      modalActions.innerHTML = `
+        <button onclick="window.print()" class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-xs md:text-sm font-semibold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Imprimir</button>
+        <button onclick="closeTicketModal()" class="flex-1 bg-dark-900 text-white py-2 border border-dark-600 rounded-lg text-xs md:text-sm font-semibold hover:bg-dark-800 transition">Cerrar</button>
+      `;
+
+      document.getElementById('ticket-modal').classList.remove('hidden');
+      if(window.lucide) lucide.createIcons();
+    }
+
+    // --- FIN DE NUEVAS FUNCIONES DE POS ---
+
+    function removeFromCart(index) { cart.splice(index,1); renderCart(); }
+
     function renderCart() {
       const container = document.getElementById('cart-items');
       container.innerHTML = cart.length === 0 ? '<p class="text-[10px] md:text-[11px] text-dark-400 text-center py-3 md:py-4">Carrito vacío</p>' :
@@ -642,55 +708,8 @@
       document.getElementById('cart-subtotal').textContent = '$' + subtotal;
       document.getElementById('cart-tax').textContent = '$' + tax;
       document.getElementById('cart-total').textContent = '$' + (subtotal + tax);
-      calculateChange(); // <--- Agrega esta línea
-      lucide.createIcons();
-    }
-
-    function processSale() {
-      if (cart.length === 0) { showToast('Agrega items', 'red'); return; }
-
-      const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
-      const tax = Math.round(subtotal * 0.16);
-      const finalTotal = subtotal + tax;
-      const payment = parseFloat(document.getElementById('pos-payment').value) || 0;
-
-      // Validar que el pago cubra el total
-      if (payment < finalTotal) {
-        showToast('Efectivo insuficiente para cubrir el total', 'red');
-        return;
-      }
-
-      const change = payment - finalTotal;
-      const client = document.getElementById('pos-client').value || 'Cliente General';
-      const employee = document.getElementById('pos-employee').value;
-      ticketCounter++;
-
-      for (const item of cart) {
-        if (!addRecord({
-          type: item.type === 'service' ? 'sale_service' : 'sale_product',
-          client_name: client,
-          client_phone: '',
-          service: item.type === 'service' ? item.name : '',
-          product: item.type === 'product' ? item.name : '',
-          employee: employee,
-          amount: item.price * item.qty,
-          date: new Date().toISOString(),
-          status: 'completed',
-          notes: 'Ticket #' + ticketCounter,
-          quantity: item.qty
-        })) return;
-      }
-
-      // Le pasamos el total, el pago y el cambio al ticket
-      showTicket(client, employee, cart, subtotal, payment, change);
-      
-      // Limpiar el carrito y los campos de texto
-      cart = [];
-      renderCart();
-      document.getElementById('pos-client').value = '';
-      if(document.getElementById('pos-payment')) document.getElementById('pos-payment').value = '';
       calculateChange(); 
-      showToast('¡Venta guardada!');
+      lucide.createIcons();
     }
 
     function renderCalendar() {
@@ -978,41 +997,6 @@
     function prevSalesMonth() { currentSalesCalendarDate = new Date(currentSalesCalendarDate.getFullYear(), currentSalesCalendarDate.getMonth() - 1, 1); renderSalesCalendar(); }
     function nextSalesMonth() { currentSalesCalendarDate = new Date(currentSalesCalendarDate.getFullYear(), currentSalesCalendarDate.getMonth() + 1, 1); renderSalesCalendar(); }
 
-    function showTicket(client, employee, items, subtotal, payment = 0, change = 0) {
-      const tax = Math.round(subtotal * 0.16);
-      const finalTotal = subtotal + tax;
-      const content = document.getElementById('ticket-content');
-      
-      content.innerHTML = `
-        <div class="border-b pb-3 mb-3">
-          <div class="w-10 md:w-12 h-10 md:h-12 rounded-full bg-gradient-to-br from-yellow-600 to-yellow-800 mx-auto mb-2 flex items-center justify-center text-white font-bold text-lg md:text-xl">C</div>
-          <h3 class="font-bold text-xs md:text-sm">${config.business_name}</h3>
-          <p class="text-[9px] md:text-[10px] text-gray-500">${config.business_address}</p>
-          <p class="text-[9px] md:text-[10px] text-gray-500">Tel: ${config.business_phone}</p>
-        </div>
-        <div class="text-left text-[10px] md:text-[11px] space-y-1 mb-3">
-          <p><strong>Ticket:</strong> #${ticketCounter}</p>
-          <p><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-MX')}</p>
-          <p><strong>Cliente:</strong> ${client}</p>
-          <p><strong>Barbero:</strong> ${employee}</p>
-        </div>
-        <div class="border-t border-b py-2 mb-2 text-left">
-          ${items.map(i => `<div class="flex justify-between text-[10px] md:text-[11px] py-0.5"><span>${i.name} x${i.qty}</span><span>$${i.price*i.qty}</span></div>`).join('')}
-        </div>
-        <div class="text-left text-[10px] md:text-[11px] space-y-0.5 mb-2 pb-2 border-b">
-          <div class="flex justify-between"><span>Subtotal:</span><span>$${subtotal}</span></div>
-          <div class="flex justify-between"><span>IVA (16%):</span><span>$${tax}</span></div>
-          <div class="flex justify-between font-bold text-base mt-1"><span>Total:</span><span>$${finalTotal}</span></div>
-        </div>
-        <div class="text-left text-[10px] md:text-[11px] space-y-0.5 font-bold">
-          <div class="flex justify-between text-gray-600"><span>Efectivo Recibido:</span><span>$${payment.toFixed(2)}</span></div>
-          <div class="flex justify-between text-green-600"><span>Cambio:</span><span>$${change.toFixed(2)}</span></div>
-        </div>
-        <p class="text-[8px] md:text-[9px] text-gray-400 mt-3">¡Gracias por su preferencia!</p>
-      `;
-      document.getElementById('ticket-modal').classList.remove('hidden');
-    }
-
     function closeTicketModal() { document.getElementById('ticket-modal').classList.add('hidden'); }
 
     function formatDate(d) { if(!d) return ''; try { return new Date(d).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); } catch(e) { return d; } }
@@ -1026,10 +1010,11 @@
 
     // Initialize
     loadData();
+    renderDynamicProducts();
     renderCart();
     renderCalendar();
     updateDashboard();
     lucide.createIcons();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0f0eb90769512d0',t:'MTc4MjAyMjk2MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ </body>
 </html>

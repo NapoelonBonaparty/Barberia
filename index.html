@@ -1,20 +1,27 @@
 <!doctype html>
 <html lang="es" class="h-full">
- <head>
+
+<head>
   <script src="/_sdk/telemetry_sdk.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Barbería Cochilocos</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
+
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            gold: { 50:'#fff9e6', 100:'#fff0b3', 200:'#ffe680', 300:'#ffd94d', 400:'#ffcc1a', 500:'#d4af37', 600:'#b8960e', 700:'#8c7200', 800:'#604e00', 900:'#332900' },
-            dark: { 50:'#f5f5f5', 100:'#e0e0e0', 200:'#bdbdbd', 300:'#9e9e9e', 400:'#757575', 500:'#616161', 600:'#424242', 700:'#2d2d2d', 800:'#1a1a1a', 900:'#0d0d0d' }
+            gold: { 50: '#fff9e6', 100: '#fff0b3', 200: '#ffe680', 300: '#ffd94d', 400: '#ffcc1a', 500: '#d4af37', 600: '#b8960e', 700: '#8c7200', 800: '#604e00', 900: '#332900' },
+            dark: { 50: '#f5f5f5', 100: '#e0e0e0', 200: '#bdbdbd', 300: '#9e9e9e', 400: '#757575', 500: '#616161', 600: '#424242', 700: '#2d2d2d', 800: '#1a1a1a', 900: '#0d0d0d' }
           }
         }
       }
@@ -22,334 +29,613 @@
   </script>
   <style>
     body { box-sizing: border-box; }
-    /* Estilos para ocultar todo excepto el ticket al imprimir */
+    
     @media print {
+      /* 1. Fondo completamente blanco sin márgenes */
+      html, body { 
+        background-color: white !important; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+      }
+      
       body * { visibility: hidden; }
-      #ticket-modal, #ticket-modal * { visibility: visible; color: black !important; }
-      #ticket-modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; width: 100%; background: white; align-items: flex-start; justify-content: flex-start; }
+      
+      /* 2. Todo en negritas y matar CUALQUIER sombra globalmente */
+      #ticket-modal, #ticket-modal * { 
+        visibility: visible; 
+        color: black !important; 
+        font-weight: bold !important; 
+        box-shadow: none !important;
+        text-shadow: none !important;
+      }
+      
+      /* 3. Ajuste de posicionamiento del modal */
+      #ticket-modal { 
+        position: absolute; 
+        left: 0; 
+        top: 0; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+        width: 100%; 
+        background: white !important; 
+        display: block !important; 
+      }
+
+      /* 4. Matar las propiedades de la tarjeta blanca (adiós sombreado y scroll) */
+      #ticket-modal > div {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+      }
+      
       .no-print { display: none !important; }
+      
+      /* 5. Sin márgenes de página */
+      @page { margin: 0; }
     }
   </style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
   <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
- </head>
- <body class="h-full bg-dark-900 text-white overflow-hidden">
-  <div id="app" class="h-full w-full flex">
-   <aside id="sidebar" class="w-64 bg-dark-800 border-r border-dark-600 flex-shrink-0 flex flex-col h-full transition-all duration-300 lg:relative fixed z-50 -translate-x-full lg:translate-x-0">
-    <div class="p-5 border-b border-dark-600">
-     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center text-dark-900 font-bold text-lg font-display">
-       C
-      </div>
-      <div>
-       <h1 class="font-display font-bold text-gold-500 text-sm" id="brand-name">Cochilocos</h1>
-       <p class="text-[10px] text-dark-300">Sistema Administrativo</p>
-      </div>
-     </div>
-    </div>
-    <nav class="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hide">
-     <button onclick="navigate('dashboard')" class="sidebar-link active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="dashboard"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="hidden sm:inline">Dashboard</span></button> <button onclick="navigate('pos')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="pos"><i data-lucide="shopping-cart" class="w-4 h-4"></i><span class="hidden sm:inline">POS</span></button> <button onclick="navigate('appointments')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="appointments"><i data-lucide="calendar" class="w-4 h-4"></i><span class="hidden sm:inline">Agenda</span></button> <button onclick="navigate('clients')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="clients"><i data-lucide="users" class="w-4 h-4"></i><span class="hidden sm:inline">Clientes</span></button> <button onclick="navigate('services')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="services"><i data-lucide="scissors" class="w-4 h-4"></i><span class="hidden sm:inline">Servicios</span></button> <button onclick="navigate('products')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="products"><i data-lucide="package" class="w-4 h-4"></i><span class="hidden sm:inline">Productos</span></button> <button onclick="navigate('employees')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="employees"><i data-lucide="user-check" class="w-4 h-4"></i><span class="hidden sm:inline">Empleados</span></button> <button onclick="navigate('finance')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="finance"><i data-lucide="trending-up" class="w-4 h-4"></i><span class="hidden sm:inline">Finanzas</span></button> <button onclick="navigate('tickets')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="tickets"><i data-lucide="receipt" class="w-4 h-4"></i><span class="hidden sm:inline">Tickets</span></button>
-    </nav>
-    <div class="p-3 border-t border-dark-600">
-     <div class="flex items-center gap-2 px-3 py-2">
-      <div class="w-8 h-8 rounded-full bg-dark-600 flex items-center justify-center"><i data-lucide="user" class="w-4 h-4 text-gold-500"></i>
-      </div>
-      <div class="hidden sm:block">
-       <p class="text-xs font-medium">Administrador</p>
-       <p class="text-[10px] text-dark-400">Online</p>
-      </div>
-     </div>
-    </div>
-   </aside><main class="flex-1 flex flex-col h-full overflow-hidden">
-    <header class="h-14 bg-dark-800 border-b border-dark-600 flex items-center justify-between px-4 flex-shrink-0">
-     <div class="flex items-center gap-3">
-      <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-dark-700"><i data-lucide="menu" class="w-5 h-5"></i></button>
-      <h2 id="page-title" class="font-display font-bold text-lg">Dashboard</h2>
-     </div>
-     <div class="flex items-center gap-2">
-      <div class="relative hidden sm:block">
-       <input type="text" placeholder="Buscar..." class="pl-8 pr-3 py-1.5 rounded-lg text-xs w-48"> <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-dark-400"></i>
-      </div><button class="p-2 rounded-lg hover:bg-dark-700 relative"><i data-lucide="bell" class="w-4 h-4"></i><span class="absolute top-1 right-1 w-2 h-2 bg-gold-500 rounded-full"></span></button>
-     </div>
-    </header><div id="content" class="flex-1 overflow-y-auto p-3 md:p-6 scrollbar-hide">
-     <div id="view-dashboard" class="fade-in">
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
-       <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 cursor-pointer hover:border-gold-500" onclick="navigate('pos')">
-        <div class="flex items-center justify-between mb-2"><i data-lucide="dollar-sign" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i><span class="text-[8px] md:text-[10px] text-green-400 bg-green-400/10 px-1 py-0.5 rounded">Hoy</span>
-        </div>
-        <p class="text-base md:text-xl font-bold" id="stat-today">$0</p>
-        <p class="text-[10px] md:text-[11px] text-dark-400">Ventas hoy</p>
-       </div>
-       <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 cursor-pointer hover:border-gold-500" onclick="navigate('appointments')">
-        <div class="flex items-center justify-between mb-2"><i data-lucide="calendar" class="w-4 md:w-5 h-4 md:h-5 text-blue-400"></i><span class="text-[8px] md:text-[10px] text-blue-400 bg-blue-400/10 px-1 py-0.5 rounded">Hoy</span>
-        </div>
-        <p class="text-base md:text-xl font-bold" id="stat-appointments">0</p>
-        <p class="text-[10px] md:text-[11px] text-dark-400">Citas del día</p>
-       </div>
-       <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
-        <div class="flex items-center justify-between mb-2"><i data-lucide="users" class="w-4 md:w-5 h-4 md:h-5 text-purple-400"></i>
-        </div>
-        <p class="text-base md:text-xl font-bold" id="stat-clients">0</p>
-        <p class="text-[10px] md:text-[11px] text-dark-400">Clientes</p>
-       </div>
-       <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
-        <div class="flex items-center justify-between mb-2"><i data-lucide="package" class="w-4 md:w-5 h-4 md:h-5 text-orange-400"></i>
-        </div>
-        <p class="text-base md:text-xl font-bold" id="stat-products">0</p>
-        <p class="text-[10px] md:text-[11px] text-dark-400">Productos</p>
-       </div>
-      </div><div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
-       <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
-        <div class="flex items-center justify-between mb-2">
-         <h3 class="text-xs md:text-sm font-semibold">Nómina</h3><i data-lucide="briefcase" class="w-3 md:w-4 h-3 md:h-4 text-green-400"></i>
-        </div>
-        <p class="text-xl md:text-2xl font-bold text-green-400" id="stat-payroll">$0</p>
-        <p class="text-[9px] md:text-[10px] text-dark-400 mt-1">Costo hoy</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
-        <div class="flex items-center justify-between mb-2">
-         <h3 class="text-xs md:text-sm font-semibold">Gastos</h3><i data-lucide="trending-down" class="w-3 md:w-4 h-3 md:h-4 text-red-400"></i>
-        </div>
-        <p class="text-xl md:text-2xl font-bold text-red-400" id="stat-expenses">$0</p>
-        <p class="text-[9px] md:text-[10px] text-dark-400 mt-1">Estimado</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
-        <div class="flex items-center justify-between mb-2">
-         <h3 class="text-xs md:text-sm font-semibold">Ganancia</h3><i data-lucide="trending-up" class="w-3 md:w-4 h-3 md:h-4 text-gold-500"></i>
-        </div>
-        <p class="text-xl md:text-2xl font-bold text-gold-500" id="stat-profit">$0</p>
-        <p class="text-[9px] md:text-[10px] text-dark-400 mt-1">Neta</p>
-       </div>
-      </div><div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 mb-4 md:mb-6">
-       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-xs md:text-sm font-semibold">Ventas del Mes</h3>
-        <div class="flex items-center gap-2"><button onclick="prevSalesMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-left" class="w-3 md:w-4 h-3 md:h-4"></i></button><span id="sales-month-display" class="text-xs md:text-sm font-medium text-gold-500 min-w-[100px] text-center">Enero 2024</span><button onclick="nextSalesMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-right" class="w-3 md:w-4 h-3 md:h-4"></i></button>
-        </div>
-       </div>
-       <div class="grid grid-cols-7 gap-1 md:gap-2 mb-2">
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Lun</div>
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Mar</div>
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Mié</div>
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Jue</div>
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Vie</div>
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Sáb</div>
-        <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Dom</div>
-       </div>
-       <div id="sales-calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2 mb-3 md:mb-4"></div>
-       <div class="flex flex-wrap gap-2 md:gap-4 text-[8px] md:text-[10px] pt-3 border-t border-dark-600">
-        <div class="flex items-center gap-2">
-         <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-dark-700 border border-dark-600"></div><span class="text-dark-400">$0</span>
-        </div>
-        <div class="flex items-center gap-2">
-         <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-blue-900"></div><span class="text-dark-400">$100-500</span>
-        </div>
-        <div class="flex items-center gap-2">
-         <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-blue-600"></div><span class="text-dark-400">$500-1000</span>
-        </div>
-        <div class="flex items-center gap-2">
-         <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-gold-600"></div><span class="text-dark-400">$1000+</span>
-        </div>
-       </div>
-      </div><div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
-       <div class="lg:col-span-2 bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
-        <h3 class="font-semibold text-xs md:text-sm mb-3">Ventas de la Semana</h3>
-        <div class="h-32 md:h-40 flex items-end gap-1 md:gap-2" id="weekly-chart"></div>
-       </div>
-       <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
-        <h3 class="font-semibold text-xs md:text-sm mb-3">Servicios Populares</h3>
-        <div id="services-ranking" class="space-y-2"></div>
-       </div>
-      </div>
-     </div><div id="view-appointments" class="fade-in hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
-       <div class="lg:col-span-2 bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-        <div class="flex items-center justify-between mb-4">
-         <button onclick="prevMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-         <h3 class="text-xs md:text-sm font-semibold text-center flex-1" id="calendar-month">Enero 2024</h3><button onclick="nextMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-        </div>
-        <div class="grid grid-cols-7 gap-1 md:gap-2 mb-2">
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Lun</div>
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Mar</div>
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Mié</div>
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Jue</div>
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Vie</div>
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Sáb</div>
-         <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Dom</div>
-        </div>
-        <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2 mb-4"></div>
-       </div><div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 h-fit">
-        <h3 class="text-xs md:text-sm font-semibold mb-3">Nueva Cita</h3>
-        <div class="space-y-2 md:space-y-3">
-         <div>
-          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Cliente*</label> <input id="apt-client" type="text" class="w-full rounded-lg px-3 py-1.5 text-xs" placeholder="Nombre">
-         </div>
-         <div>
-          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Teléfono</label> <input id="apt-phone" type="text" class="w-full rounded-lg px-3 py-1.5 text-xs" placeholder="Teléfono">
-         </div>
-         <div>
-          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Servicio*</label> <select id="apt-service" class="w-full rounded-lg px-3 py-1.5 text-xs"> <option>Corte Clásico</option> <option>Corte + Barba</option> <option>Fade Premium</option> <option>Tinte</option> <option>Barba</option> </select>
-         </div>
-         <div>
-          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Barbero*</label> <select id="apt-employee" class="w-full rounded-lg px-3 py-1.5 text-xs"> <option>Carlos</option> <option>Miguel</option> <option>Jesús</option> </select>
-         </div>
-         <div>
-          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Fecha*</label> <input id="apt-date" type="text" class="w-full rounded-lg px-3 py-1.5 text-xs bg-dark-700 cursor-default" readonly placeholder="Selecciona día">
-         </div>
-         <div>
-          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Hora*</label> <input id="apt-time" type="time" class="w-full rounded-lg px-3 py-1.5 text-xs" value="10:00">
-         </div>
-         <div>
-          <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Notas</label> <textarea id="apt-notes" class="w-full rounded-lg px-3 py-1.5 text-xs" placeholder="Observaciones..." rows="2"></textarea>
-         </div><button onclick="saveAppointment()" class="w-full bg-gold-500 text-dark-900 py-2 rounded-lg text-xs font-semibold hover:bg-gold-400 transition">Guardar</button>
-        </div>
-       </div>
-      </div><div class="mt-4 bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-       <h3 class="text-xs md:text-sm font-semibold mb-3">Próximas Citas</h3>
-       <div id="appointments-list" class="space-y-2"></div>
-      </div>
-     </div><div id="view-pos" class="fade-in hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
-       <div class="lg:col-span-2">
-        <div class="mb-4">
-         <h3 class="text-xs md:text-sm font-semibold mb-2 text-gold-500">Servicios</h3>
-         <div class="grid grid-cols-2 md:grid-cols-3 gap-2" id="pos-services">
-          <button onclick="addToCart('service','Corte Clásico',120)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="scissors" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i><p class="text-xs font-medium">Corte Clásico</p><p class="text-[9px] md:text-[10px] text-gold-500">$120</p></button> <button onclick="addToCart('service','Corte + Barba',180)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="scissors" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i><p class="text-xs font-medium">Corte + Barba</p><p class="text-[9px] md:text-[10px] text-gold-500">$180</p></button> <button onclick="addToCart('service','Fade Premium',220)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="scissors" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i><p class="text-xs font-medium">Fade Premium</p><p class="text-[9px] md:text-[10px] text-gold-500">$220</p></button> <button onclick="addToCart('service','Tinte',350)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="palette" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i><p class="text-xs font-medium">Tinte</p><p class="text-[9px] md:text-[10px] text-gold-500">$350</p></button> <button onclick="addToCart('service','Barba',80)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="scissors" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i><p class="text-xs font-medium">Barba</p><p class="text-[9px] md:text-[10px] text-gold-500">$80</p></button> <button onclick="addToCart('service','Lavado',60)" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition"><i data-lucide="droplets" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i><p class="text-xs font-medium">Lavado</p><p class="text-[9px] md:text-[10px] text-gold-500">$60</p></button>
-         </div>
-        </div>
+</head>
+
+<body class="h-full bg-dark-900 text-white overflow-hidden">
+
+
+  <!-- LOGIN VIEW -->
+  <div id="login-view" class="fixed inset-0 bg-dark-900 z-[100] flex items-center justify-center p-4">
+    <div class="bg-dark-800 border border-dark-600 rounded-2xl w-full max-w-sm p-8 shadow-2xl flex flex-col items-center relative overflow-hidden">
+      <!-- Efecto de brillo de fondo opcional -->
+      <div class="absolute -top-20 -right-20 w-40 h-40 bg-gold-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-gold-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Logo -->
+      <img src="co.png" alt="Logo Cochilocos" class="w-24 h-24 rounded-full object-cover bg-white border-2 border-gold-500 mb-4 z-10 shadow-lg">
+      
+      <h2 class="text-2xl font-display font-bold text-white z-10 tracking-wide uppercase">Cochilocos</h2>
+      <p class="text-xs text-dark-300 mb-8 z-10">Sistema Administrativo</p>
+
+      <!-- Formulario -->
+      <div class="w-full space-y-4 z-10">
         <div>
-         <h3 class="text-xs md:text-sm font-semibold mb-2 text-gold-500">Productos</h3>
-         <div class="grid grid-cols-2 md:grid-cols-3 gap-2" id="pos-dynamic-products">
-         </div>
+          <label class="text-[10px] text-dark-400 block mb-1">Usuario</label>
+          <div class="relative">
+            <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400"></i>
+            <input id="login-user" type="text" value="admin" placeholder="admin" class="w-full bg-dark-900 border border-dark-600 rounded-lg pl-10 pr-3 py-2.5 text-sm text-white outline-none focus:border-gold-500 transition-colors">
+          </div>
         </div>
-       </div><div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 flex flex-col h-fit lg:h-auto lg:max-h-96">
-        <h3 class="font-semibold text-xs md:text-sm mb-2">🧾 Ticket</h3>
-        <div class="mb-3">
-         <label class="text-[9px] md:text-[10px] text-dark-400">Cliente</label> <input id="pos-client" type="text" placeholder="Nombre" class="w-full rounded-lg px-3 py-1.5 text-xs mt-1"> <label class="text-[9px] md:text-[10px] text-dark-400 mt-2 block">Barbero</label> <select id="pos-employee" class="w-full rounded-lg px-3 py-1.5 text-xs mt-1"> <option>Carlos</option> <option>Miguel</option> <option>Jesús</option> </select>
+
+        <div>
+          <label class="text-[10px] text-dark-400 block mb-1">Contraseña</label>
+          <div class="relative">
+            <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400"></i>
+            <input id="login-pass" type="password" value="admin" placeholder="••••••" class="w-full bg-dark-900 border border-dark-600 rounded-lg pl-10 pr-10 py-2.5 text-sm text-white outline-none focus:border-gold-500 transition-colors">
+            <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-gold-500 transition-colors">
+              <i data-lucide="eye" id="eye-icon" class="w-4 h-4"></i>
+            </button>
+          </div>
         </div>
-        <div id="cart-items" class="flex-1 overflow-y-auto space-y-1 mb-3 min-h-[80px] md:min-h-[100px]"></div>
+
+        <button onclick="processLogin()" class="w-full bg-gold-500 text-dark-900 font-bold py-3 rounded-lg text-sm hover:bg-gold-400 transition-colors shadow-lg shadow-gold-500/20 mt-6">
+          Iniciar Sesión
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="app" class="h-full w-full flex" style="display: none;">
+  
+  <aside id="sidebar" class="w-64 bg-dark-800 border-r border-dark-600 flex-shrink-0 flex flex-col h-full transition-all duration-300 lg:relative fixed z-50 -translate-x-full lg:translate-x-0">
+      <div class="p-5 border-b border-dark-600">
+        <div class="flex items-center gap-3">
+          <!-- Logo de la Barbería -->
+          <img src="co.png" alt="Logo Cochilocos" class="w-11 h-11 rounded-full object-cover bg-white border border-gold-500/30">
+          <div>
+            <h1 class="font-display font-bold text-gold-500 text-sm" id="brand-name">Cochilocos</h1>
+            <p class="text-[10px] text-dark-300">Sistema Administrativo</p>
+          </div>
+        </div>
+      </div>
+      <nav class="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hide">
+        <button onclick="navigate('dashboard')" class="sidebar-link active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="dashboard"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="hidden sm:inline">Dashboard</span></button> 
+        <button onclick="navigate('pos')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="pos"><i data-lucide="shopping-cart" class="w-4 h-4"></i><span class="hidden sm:inline">POS</span></button> 
+        <button onclick="navigate('appointments')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="appointments"><i data-lucide="calendar" class="w-4 h-4"></i><span class="hidden sm:inline">Agenda</span></button> 
+        <button onclick="navigate('clients')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="clients"><i data-lucide="users" class="w-4 h-4"></i><span class="hidden sm:inline">Clientes</span></button> 
+        <button onclick="navigate('services')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="services"><i data-lucide="scissors" class="w-4 h-4"></i><span class="hidden sm:inline">Servicios</span></button> 
+        <button onclick="navigate('products')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="products"><i data-lucide="package" class="w-4 h-4"></i><span class="hidden sm:inline">Productos</span></button> 
+        <button onclick="navigate('employees')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="employees"><i data-lucide="user-check" class="w-4 h-4"></i><span class="hidden sm:inline">Empleados</span></button>
+        <button onclick="navigate('finance')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="finance"><i data-lucide="trending-up" class="w-4 h-4"></i><span class="hidden sm:inline">Finanzas</span></button>
+        <button onclick="navigate('tickets')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="tickets"><i data-lucide="receipt" class="w-4 h-4"></i><span class="hidden sm:inline">Tickets</span></button>
         
-        <div class="border-t border-dark-600 pt-3 space-y-1">
-          <div class="flex justify-between text-[9px] md:text-xs"><span>Subtotal</span><span id="cart-subtotal">$0</span></div>
-          <div class="flex justify-between text-[9px] md:text-xs"><span>IVA (16%)</span><span id="cart-tax">$0</span></div>
-          <div class="flex justify-between font-bold text-gold-500"><span>Total</span><span id="cart-total">$0</span></div>
+        <button onclick="navigate('users')" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm" data-nav="users">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Usuarios</span>
+        </button>
+        
+      </nav>
+      <div class="p-3 border-t border-dark-600">
+        <div class="flex items-center justify-between px-3 py-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-dark-600 flex items-center justify-center"><i data-lucide="user" class="w-4 h-4 text-gold-500"></i></div>
+            <div class="hidden sm:block">
+              <p class="text-xs font-medium">Administrador</p>
+              <p class="text-[10px] text-green-400">Online</p>
+            </div>
+          </div>
+          <!-- Botón de Salir -->
+          <button onclick="processLogout()" class="text-dark-400 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-red-400/10" title="Cerrar Sesión">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full overflow-hidden">
+      
+      <header class="h-14 bg-dark-800 border-b border-dark-600 flex items-center justify-between px-4 flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-dark-700"><i data-lucide="menu" class="w-5 h-5"></i></button>
+          <h2 id="page-title" class="font-display font-bold text-lg">Dashboard</h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="relative hidden sm:block">
+            <input type="text" placeholder="Buscar..." class="pl-8 pr-3 py-1.5 bg-dark-700 border-dark-600 rounded-lg text-xs w-48 text-white"> 
+            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-dark-400"></i>
+          </div>
+          <button class="p-2 rounded-lg hover:bg-dark-700 relative"><i data-lucide="bell" class="w-4 h-4"></i><span class="absolute top-1 right-1 w-2 h-2 bg-gold-500 rounded-full"></span></button>
+        </div>
+      </header>
+      
+
+      <div id="content" class="flex-1 overflow-y-auto p-3 md:p-6 scrollbar-hide">
+        
+        <div id="view-dashboard" class="fade-in">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
+            <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 cursor-pointer hover:border-gold-500" onclick="navigate('pos')">
+              <div class="flex items-center justify-between mb-2"><i data-lucide="dollar-sign" class="w-4 md:w-5 h-4 md:h-5 text-gold-500"></i><span class="text-[8px] md:text-[10px] text-green-400 bg-green-400/10 px-1 py-0.5 rounded">Hoy</span></div>
+              <p class="text-base md:text-xl font-bold" id="stat-today">$0</p>
+              <p class="text-[10px] md:text-[11px] text-dark-400">Ventas hoy</p>
+            </div>
+            <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 cursor-pointer hover:border-gold-500" onclick="navigate('appointments')">
+              <div class="flex items-center justify-between mb-2"><i data-lucide="calendar" class="w-4 md:w-5 h-4 md:h-5 text-blue-400"></i><span class="text-[8px] md:text-[10px] text-blue-400 bg-blue-400/10 px-1 py-0.5 rounded">Hoy</span></div>
+              <p class="text-base md:text-xl font-bold" id="stat-appointments">0</p>
+              <p class="text-[10px] md:text-[11px] text-dark-400">Citas del día</p>
+            </div>
+            <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 cursor-pointer hover:border-gold-500" onclick="navigate('clients')">
+              <div class="flex items-center justify-between mb-2"><i data-lucide="users" class="w-4 md:w-5 h-4 md:h-5 text-purple-400"></i></div>
+              <p class="text-base md:text-xl font-bold" id="stat-clients">0</p>
+              <p class="text-[10px] md:text-[11px] text-dark-400">Clientes totales</p>
+            </div>
+            <div class="card-stat bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 cursor-pointer hover:border-gold-500" onclick="navigate('products')">
+              <div class="flex items-center justify-between mb-2"><i data-lucide="package" class="w-4 md:w-5 h-4 md:h-5 text-orange-400"></i></div>
+              <p class="text-base md:text-xl font-bold" id="stat-products">0</p>
+              <p class="text-[10px] md:text-[11px] text-dark-400">En inventario</p>
+            </div>
+          </div>
           
-          <div class="flex justify-between items-center text-[9px] md:text-xs mt-2 pt-2 border-t border-dark-700">
-            <span>Método</span>
-            <select id="pos-method" class="w-20 md:w-24 bg-dark-700 border border-dark-600 rounded px-1 py-1 text-gold-500 font-bold focus:border-gold-500 outline-none" onchange="calculateChange()">
-              <option value="Efectivo">Efectivo</option>
-              <option value="Tarjeta">Tarjeta</option>
-              <option value="Transferencia">Transferencia</option>
-            </select>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+            <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
+              <div class="flex items-center justify-between mb-2"><h3 class="text-xs md:text-sm font-semibold">Nómina</h3><i data-lucide="briefcase" class="w-3 md:w-4 h-3 md:h-4 text-dark-400"></i></div>
+              <p class="text-xl md:text-2xl font-bold text-dark-400" id="stat-payroll">$0</p>
+              <p class="text-[9px] md:text-[10px] text-dark-400 mt-1">Costo diario base</p>
+            </div>
+            <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
+              <div class="flex items-center justify-between mb-2"><h3 class="text-xs md:text-sm font-semibold">Gastos</h3><i data-lucide="trending-down" class="w-3 md:w-4 h-3 md:h-4 text-red-400"></i></div>
+              <p class="text-xl md:text-2xl font-bold text-red-400" id="stat-expenses">$0</p>
+              <p class="text-[9px] md:text-[10px] text-dark-400 mt-1">Registrados hoy</p>
+            </div>
+            <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
+              <div class="flex items-center justify-between mb-2"><h3 class="text-xs md:text-sm font-semibold">Ganancia</h3><i data-lucide="trending-up" class="w-3 md:w-4 h-3 md:h-4 text-gold-500"></i></div>
+              <p class="text-xl md:text-2xl font-bold text-gold-500" id="stat-profit">$0</p>
+              <p class="text-[9px] md:text-[10px] text-dark-400 mt-1">Neta del día</p>
+            </div>
+          </div>
+          
+          <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600 mb-4 md:mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-xs md:text-sm font-semibold">Ventas del Mes</h3>
+              <div class="flex items-center gap-2">
+                <button onclick="prevSalesMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-left" class="w-3 md:w-4 h-3 md:h-4"></i></button>
+                <span id="sales-month-display" class="text-xs md:text-sm font-medium text-gold-500 min-w-[100px] text-center">Enero 2024</span>
+                <button onclick="nextSalesMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-right" class="w-3 md:w-4 h-3 md:h-4"></i></button>
+              </div>
+            </div>
+            <div class="grid grid-cols-7 gap-1 md:gap-2 mb-2">
+              <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Lun</div>
+              <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Mar</div>
+              <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Mié</div>
+              <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Jue</div>
+              <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Vie</div>
+              <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Sáb</div>
+              <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Dom</div>
+            </div>
+            <div id="sales-calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2 mb-3 md:mb-4"></div>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+            <div class="lg:col-span-2 bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
+              <h3 class="font-semibold text-xs md:text-sm mb-3">Ventas de la Semana</h3>
+              <div class="h-32 md:h-40 flex items-end gap-1 md:gap-2" id="weekly-chart"></div>
+            </div>
+            <div class="bg-dark-800 rounded-xl p-3 md:p-4 border border-dark-600">
+              <h3 class="font-semibold text-xs md:text-sm mb-3">Servicios Populares</h3>
+              <div id="services-ranking" class="space-y-2"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-appointments" class="fade-in hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
+            <div class="lg:col-span-2 bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+              <div class="flex items-center justify-between mb-4">
+                <button onclick="prevMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                <h3 class="text-xs md:text-sm font-semibold text-center flex-1" id="calendar-month">Enero 2024</h3>
+                <button onclick="nextMonth()" class="p-1.5 rounded-lg hover:bg-dark-700"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+              </div>
+              <div class="grid grid-cols-7 gap-1 md:gap-2 mb-2">
+                <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Lun</div>
+                <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Mar</div>
+                <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Mié</div>
+                <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Jue</div>
+                <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Vie</div>
+                <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Sáb</div>
+                <div class="text-center text-[9px] md:text-[10px] font-semibold text-dark-400">Dom</div>
+              </div>
+              <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2 mb-4"></div>
+            </div>
+            
+            <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 h-fit">
+              <h3 class="text-xs md:text-sm font-semibold mb-3">Nueva Cita</h3>
+              <div class="space-y-2 md:space-y-3">
+                <div>
+                  <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Cliente*</label> 
+                  <input id="apt-client" type="text" class="w-full bg-dark-700 border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white" placeholder="Nombre">
+                </div>
+                <div>
+                  <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Teléfono</label> 
+                  <input id="apt-phone" type="text" class="w-full bg-dark-700 border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white" placeholder="Teléfono">
+                </div>
+                <div>
+                  <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Servicio*</label> 
+                  <select id="apt-service" class="w-full bg-dark-700 border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white">
+                    <option>Corte Clásico</option>
+                    <option>Corte + Barba</option>
+                    <option>Fade Premium</option>
+                    <option>Tinte</option>
+                    <option>Barba</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Barbero*</label> 
+                  <select id="apt-employee" class="w-full bg-dark-700 border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white">
+                    <option>Carlos</option>
+                    <option>Miguel</option>
+                    <option>Jesús</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Fecha*</label> 
+                  <input id="apt-date" type="text" class="w-full rounded-lg px-3 py-1.5 text-xs bg-dark-700 border-dark-600 text-white cursor-default" readonly placeholder="Selecciona día en calendario">
+                </div>
+                <div>
+                  <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Hora*</label> 
+                  <input id="apt-time" type="time" class="w-full bg-dark-700 border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white" value="10:00">
+                </div>
+                <div>
+                  <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Notas</label> 
+                  <textarea id="apt-notes" class="w-full bg-dark-700 border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white" placeholder="Observaciones..." rows="2"></textarea>
+                </div>
+                <button onclick="saveAppointment()" class="w-full bg-gold-500 text-dark-900 py-2 rounded-lg text-xs font-semibold hover:bg-gold-400 transition">Guardar</button>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+            <h3 class="text-xs md:text-sm font-semibold mb-3">Próximas Citas</h3>
+            <div id="appointments-list" class="space-y-2"></div>
+          </div>
+        </div>
+
+        <div id="view-pos" class="fade-in hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
+            <div class="lg:col-span-2">
+              <div class="mb-4">
+                <h3 class="text-xs md:text-sm font-semibold mb-2 text-gold-500">Servicios</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2" id="pos-dynamic-services">
+                  </div>
+              </div>
+              <div>
+                <h3 class="text-xs md:text-sm font-semibold mb-2 text-gold-500">Productos</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2" id="pos-dynamic-products">
+                  </div>
+              </div>
+            </div>
+            
+            <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 flex flex-col h-fit">
+              <h3 class="font-semibold text-xs md:text-sm mb-2">🧾 Ticket</h3>
+              
+              <div class="mb-3">
+                <label class="text-[9px] md:text-[10px] text-dark-400 block mb-1">Cliente</label> 
+                <input id="pos-client" type="text" placeholder="Nombre (Opcional)" class="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white placeholder-dark-400 focus:border-gold-500 outline-none transition-all"> 
+                
+                <label class="text-[9px] md:text-[10px] text-dark-400 mt-3 block mb-1">Barbero</label> 
+                <select id="pos-employee" class="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white focus:border-gold-500 outline-none transition-all"> 
+                  <option>Carlos</option> 
+                  <option>Miguel</option> 
+                  <option>Jesús</option> 
+                </select>
+              </div>
+            
+              <div id="cart-items" class="flex-1 overflow-y-auto space-y-1 mb-3 min-h-[80px] max-h-[200px] scrollbar-hide"></div>
+              
+              <div class="border-t border-dark-600 pt-3 space-y-1 mt-auto">
+                <div class="flex justify-between text-[9px] md:text-xs"><span>Subtotal</span><span id="cart-subtotal">$0</span></div>
+                <div class="flex justify-between text-[9px] md:text-xs"><span>IVA (16%)</span><span id="cart-tax">$0</span></div>
+                <div class="flex justify-between font-bold text-gold-500 mt-1"><span>Total</span><span id="cart-total">$0</span></div>
+                
+                <div class="flex justify-between items-center text-[9px] md:text-xs mt-3 pt-3 border-t border-dark-700">
+                  <span>Método</span>
+                  <select id="pos-method" class="w-24 bg-dark-700 border border-dark-600 rounded-lg px-2 py-1.5 text-gold-500 font-bold focus:border-gold-500 outline-none transition-all" onchange="calculateChange()">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                    <option value="Transferencia">Transferencia</option>
+                  </select>
+                </div>
+            
+                <div class="flex justify-between items-center text-[9px] md:text-xs mt-2">
+                  <span>Monto Recibido</span>
+                  <input id="pos-payment" type="number" min="0" placeholder="0.00" class="w-24 bg-dark-700 border border-dark-600 rounded-lg px-2 py-1.5 text-right text-gold-500 font-bold focus:border-gold-500 outline-none transition-all" oninput="calculateChange()">
+                </div>
+                
+                <div class="flex justify-between font-bold text-green-400 text-[9px] md:text-xs mt-2">
+                  <span>Cambio</span>
+                  <span id="cart-change">$0.00</span>
+                </div>
+              </div>
+            
+              <button onclick="processSale()" class="mt-4 w-full bg-gold-500 text-dark-900 font-bold py-2.5 rounded-lg text-xs hover:bg-gold-400 transition-colors shadow-lg shadow-gold-500/10">Cobrar</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-clients" class="fade-in hidden">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xs md:text-sm font-semibold">Directorio de Clientes</h3>
+            <button onclick="showClientForm()" class="bg-gold-500 text-dark-900 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gold-400 transition">Nuevo Cliente</button>
+          </div>
+          
+          <div id="client-form" class="hidden bg-dark-800 p-4 rounded-xl border border-dark-600 mb-4 fade-in">
+            <h4 class="text-xs font-semibold mb-3 text-gold-500">Agregar Cliente</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+              <div>
+                <label class="text-[9px] text-dark-400 mb-1 block">Nombre Completo*</label>
+                <input id="cl-name" type="text" placeholder="Ej. Juan Pérez" class="bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-xs w-full text-white outline-none focus:border-gold-500">
+              </div>
+              <div>
+                <label class="text-[9px] text-dark-400 mb-1 block">Teléfono</label>
+                <input id="cl-phone" type="text" placeholder="Ej. 555 123 4567" class="bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-xs w-full text-white outline-none focus:border-gold-500">
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="saveClient()" class="bg-gold-500 text-dark-900 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gold-400 transition">Guardar Cliente</button>
+              <button onclick="document.getElementById('client-form').classList.add('hidden')" class="bg-dark-700 hover:bg-dark-600 text-white px-4 py-2 rounded-lg text-xs transition">Cancelar</button>
+            </div>
           </div>
 
-          <div class="flex justify-between items-center text-[9px] md:text-xs mt-1">
-            <span>Monto Recibido</span>
-            <input id="pos-payment" type="number" min="0" placeholder="0.00" class="w-20 md:w-24 bg-dark-700 border border-dark-600 rounded px-2 py-1 text-right text-gold-500 font-bold focus:border-gold-500 outline-none" oninput="calculateChange()">
+          <div id="clients-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        </div>
+
+        <div id="view-services" class="fade-in hidden">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xs md:text-sm font-semibold">Catálogo de Servicios</h3>
+            <button onclick="document.getElementById('service-form').classList.remove('hidden')" class="bg-gold-500 text-dark-900 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gold-400 transition">Nuevo Servicio</button>
           </div>
-          <div class="flex justify-between font-bold text-green-400 text-[9px] md:text-xs mt-1">
-            <span>Cambio</span>
-            <span id="cart-change">$0.00</span>
+
+          <div id="service-form" class="hidden bg-dark-800 p-4 rounded-xl border border-dark-600 mb-4 fade-in">
+            <h4 class="text-xs font-semibold mb-3 text-gold-500">Agregar Servicio</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+              <div>
+                <label class="text-[9px] text-dark-400 block mb-1">Nombre del Servicio</label>
+                <input id="new-serv-name" type="text" placeholder="Ej. Perfilado de cejas" class="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-gold-500">
+              </div>
+              <div>
+                <label class="text-[9px] text-dark-400 block mb-1">Precio ($)</label>
+                <input id="new-serv-price" type="number" placeholder="0.00" class="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-gold-500">
+              </div>
+              <div>
+                <label class="text-[9px] text-dark-400 block mb-1">Ícono</label>
+                <select id="new-serv-icon" class="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-gold-500">
+                  <option value="scissors">Tijeras (Corte/Barba)</option>
+                  <option value="droplets">Gotas (Lavado/Tratamiento)</option>
+                  <option value="palette">Paleta (Tinte/Color)</option>
+                  <option value="star">Estrella (Premium/Especial)</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="saveNewService()" class="bg-gold-500 text-dark-900 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gold-400 transition">Guardar Servicio</button>
+              <button onclick="document.getElementById('service-form').classList.add('hidden')" class="bg-dark-700 hover:bg-dark-600 text-white px-4 py-2 rounded-lg text-xs transition">Cancelar</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4" id="services-grid">
+            </div>
+        </div>
+        <div id="view-products" class="fade-in hidden">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xs md:text-sm font-semibold">Inventario de Productos</h3>
+            <button onclick="document.getElementById('product-form').classList.remove('hidden')" class="bg-gold-500 text-dark-900 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gold-400 transition shadow-lg shadow-gold-500/10">Nuevo Producto</button>
+          </div>
+
+          <div id="product-form" class="hidden bg-dark-800 p-4 rounded-xl border border-dark-600 mb-4 fade-in">
+            <h4 class="text-xs font-semibold mb-3 text-gold-500">Agregar Producto</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+              <div>
+                <label class="text-[9px] text-dark-400 block mb-1">Nombre</label>
+                <input id="new-prod-name" type="text" placeholder="Ej. Tónico capilar" class="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-gold-500">
+              </div>
+              <div>
+                <label class="text-[9px] text-dark-400 block mb-1">Precio ($)</label>
+                <input id="new-prod-price" type="number" placeholder="0.00" class="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-gold-500">
+              </div>
+              <div>
+                <label class="text-[9px] text-dark-400 block mb-1">Stock Inicial</label>
+                <input id="new-prod-stock" type="number" placeholder="Ej. 10" class="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-gold-500">
+              </div>
+              <div>
+                <label class="text-[9px] text-dark-400 block mb-1">Descripción Breve</label>
+                <input id="new-prod-desc" type="text" placeholder="Ej. Estimula el crecimiento" class="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-gold-500">
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="saveNewProduct()" class="bg-gold-500 text-dark-900 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gold-400 transition">Guardar Producto</button>
+              <button onclick="document.getElementById('product-form').classList.add('hidden')" class="bg-dark-700 hover:bg-dark-600 text-white px-4 py-2 rounded-lg text-xs transition">Cancelar</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="inventory-grid"></div>
+        </div>
+
+        <div id="view-employees" class="fade-in hidden">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xs md:text-sm font-semibold">Equipo de Trabajo</h3>
+            <button onclick="document.getElementById('employee-form').classList.remove('hidden')" class="bg-gold-500 text-dark-900 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gold-400 transition shadow-lg shadow-gold-500/10">Nuevo Empleado</button>
+          </div>
+
+          <div id="employee-form" class="hidden bg-dark-800 p-4 rounded-xl border border-dark-600 mb-4 fade-in">
+            <h4 class="text-xs font-semibold mb-3 text-gold-500">Agregar Empleado</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+              <div>
+                <label class="text-[9px] text-dark-400 block mb-1">Nombre (Primer Nombre o Apodo)</label>
+                <input id="new-emp-name" type="text" placeholder="Ej. Roberto" class="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-gold-500">
+              </div>
+              <div>
+                <label class="text-[9px] text-dark-400 block mb-1">Puesto / Rol</label>
+                <input id="new-emp-role" type="text" placeholder="Ej. Barbero Jr" class="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-gold-500">
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="saveNewEmployee()" class="bg-gold-500 text-dark-900 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gold-400 transition">Guardar Empleado</button>
+              <button onclick="document.getElementById('employee-form').classList.add('hidden')" class="bg-dark-700 hover:bg-dark-600 text-white px-4 py-2 rounded-lg text-xs transition">Cancelar</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4" id="employees-grid"></div>
+        </div>
+        
+        <div id="view-finance" class="fade-in hidden">
+          <h3 class="text-xs md:text-sm font-semibold mb-4">Finanzas</h3>
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 mb-4">
+            <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
+              <p class="text-[9px] md:text-[10px] text-dark-400">Ingresos Hoy</p>
+              <p class="text-base md:text-lg font-bold text-gold-500" id="fin-today">$0</p>
+            </div>
+            <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
+              <p class="text-[9px] md:text-[10px] text-dark-400">Ingresos Semana</p>
+              <p class="text-base md:text-lg font-bold text-gold-500" id="fin-week">$0</p>
+            </div>
+            <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
+              <p class="text-[9px] md:text-[10px] text-dark-400">Ingresos Mes</p>
+              <p class="text-base md:text-lg font-bold text-gold-500" id="fin-month">$0</p>
+            </div>
+            <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
+              <p class="text-[9px] md:text-[10px] text-dark-400">Ingresos Totales</p>
+              <p class="text-base md:text-lg font-bold text-gold-500" id="fin-total">$0</p>
+            </div>
+          </div>
+
+          <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 mb-4 fade-in">
+            <h4 class="text-xs md:text-sm font-semibold mb-3">Registrar Gasto</h4>
+            <div class="flex flex-wrap md:flex-nowrap gap-2">
+              <input id="exp-concept" type="text" placeholder="Concepto (ej. Luz, Agua, Insumos)" class="flex-1 min-w-[200px] bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-gold-500">
+              <input id="exp-amount" type="number" placeholder="Monto ($)" class="w-full md:w-32 bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-gold-500">
+              <button onclick="saveExpense()" class="w-full md:w-auto bg-red-500 text-white px-5 py-2 rounded-lg text-xs font-bold hover:bg-red-400 transition">Guardar Gasto</button>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-4">
+            <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+              <h4 class="text-xs md:text-sm font-semibold mb-3">Ingresos de los últimos 7 días</h4>
+              <div class="relative h-48 w-full">
+                <canvas id="financeChart"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+              <h4 class="text-xs md:text-sm font-semibold mb-3">Historial Reciente</h4>
+              <div id="finance-history" class="space-y-2 text-xs overflow-y-auto max-h-48 scrollbar-hide"></div>
+            </div>
           </div>
         </div>
-        <button onclick="processSale()" class="mt-3 w-full bg-gold-500 text-dark-900 font-bold py-2 md:py-2.5 rounded-lg text-xs hover:bg-gold-400 transition">Cobrar</button>
-       </div>
+        <div id="view-tickets" class="fade-in hidden">
+          <h3 class="text-xs md:text-sm font-semibold mb-4">Historial de Tickets</h3>
+          <div id="tickets-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        </div>
+
+        <div id="view-users" class="fade-in hidden">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xs md:text-sm font-semibold">Gestión de Usuarios</h3>
+            <button onclick="document.getElementById('user-form').classList.remove('hidden')" class="bg-gold-500 text-dark-900 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gold-400 transition">Nuevo Usuario</button>
+          </div>
+
+          <div id="user-form" class="hidden bg-dark-800 p-4 rounded-xl border border-dark-600 mb-4 fade-in">
+            <h4 id="form-title" class="text-xs font-semibold mb-3 text-gold-500">Nuevo Usuario</h4>
+            <input type="hidden" id="edit-u-id"> <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                <input id="new-u-name" type="text" placeholder="Usuario" class="bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-xs w-full text-white">
+                <input id="new-u-pass" type="text" placeholder="Contraseña" class="bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-xs w-full text-white">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="saveUser()" class="bg-gold-500 text-dark-900 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gold-400 transition">Guardar</button>
+                <button onclick="hideUserForm()" class="bg-dark-700 text-white px-4 py-2 rounded-lg text-xs">Cancelar</button>
+            </div>
+        </div>
+          <div id="users-list" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+        </div>
+        </div> </main>
+
+
+
+        <div id="view-tickets" class="fade-in hidden">
+          <h3 class="text-xs md:text-sm font-semibold mb-4">Historial de Tickets</h3>
+          <div id="tickets-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        </div>
+
       </div>
-     </div><div id="view-products" class="fade-in hidden">
-      <h3 class="text-xs md:text-sm font-semibold mb-4">Inventario de Productos</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3" id="inventory-grid">
-      </div>
-     </div>
-     <div id="view-employees" class="fade-in hidden">
-      <h3 class="text-xs md:text-sm font-semibold mb-4">Empleados</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 text-center">
-        <div class="w-12 md:w-16 h-12 md:h-16 rounded-full bg-gradient-to-br from-gold-500 to-gold-700 mx-auto mb-2 md:mb-3 flex items-center justify-center text-dark-900 font-bold text-lg md:text-xl font-display">
-         C
-        </div>
-        <p class="font-semibold text-xs md:text-sm">Carlos López</p>
-        <p class="text-[9px] md:text-[10px] text-dark-400 mb-2 md:mb-3">Barbero Senior</p>
-        <div class="grid grid-cols-2 gap-2 text-center">
-         <div>
-          <p class="text-xs md:text-sm font-bold text-gold-500" id="emp-carlos-sales">0</p>
-          <p class="text-[8px] md:text-[9px] text-dark-400">Servicios</p>
-         </div>
-         <div>
-          <p class="text-xs md:text-sm font-bold text-gold-500" id="emp-carlos-income">$0</p>
-          <p class="text-[8px] md:text-[9px] text-dark-400">Ingresos</p>
-         </div>
-        </div>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 text-center">
-        <div class="w-12 md:w-16 h-12 md:h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 mx-auto mb-2 md:mb-3 flex items-center justify-center text-white font-bold text-lg md:text-xl font-display">
-         M
-        </div>
-        <p class="font-semibold text-xs md:text-sm">Miguel Hernández</p>
-        <p class="text-[9px] md:text-[10px] text-dark-400 mb-2 md:mb-3">Barbero</p>
-        <div class="grid grid-cols-2 gap-2 text-center">
-         <div>
-          <p class="text-xs md:text-sm font-bold text-gold-500" id="emp-miguel-sales">0</p>
-          <p class="text-[8px] md:text-[9px] text-dark-400">Servicios</p>
-         </div>
-         <div>
-          <p class="text-xs md:text-sm font-bold text-gold-500" id="emp-miguel-income">$0</p>
-          <p class="text-[8px] md:text-[9px] text-dark-400">Ingresos</p>
-         </div>
-        </div>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 text-center">
-        <div class="w-12 md:w-16 h-12 md:h-16 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 mx-auto mb-2 md:mb-3 flex items-center justify-center text-white font-bold text-lg md:text-xl font-display">
-         J
-        </div>
-        <p class="font-semibold text-xs md:text-sm">Jesús Ramírez</p>
-        <p class="text-[9px] md:text-[10px] text-dark-400 mb-2 md:mb-3">Barbero Jr</p>
-        <div class="grid grid-cols-2 gap-2 text-center">
-         <div>
-          <p class="text-xs md:text-sm font-bold text-gold-500" id="emp-jesus-sales">0</p>
-          <p class="text-[8px] md:text-[9px] text-dark-400">Servicios</p>
-         </div>
-         <div>
-          <p class="text-xs md:text-sm font-bold text-gold-500" id="emp-jesus-income">$0</p>
-          <p class="text-[8px] md:text-[9px] text-dark-400">Ingresos</p>
-         </div>
-        </div>
-       </div>
-      </div>
-     </div><div id="view-finance" class="fade-in hidden">
-      <h3 class="text-xs md:text-sm font-semibold mb-4">Finanzas</h3>
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 mb-4">
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
-        <p class="text-[9px] md:text-[10px] text-dark-400">Hoy</p>
-        <p class="text-base md:text-lg font-bold text-gold-500" id="fin-today">$0</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
-        <p class="text-[9px] md:text-[10px] text-dark-400">Semana</p>
-        <p class="text-base md:text-lg font-bold text-gold-500" id="fin-week">$0</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
-        <p class="text-[9px] md:text-[10px] text-dark-400">Mes</p>
-        <p class="text-base md:text-lg font-bold text-gold-500" id="fin-month">$0</p>
-       </div>
-       <div class="bg-dark-800 rounded-xl border border-dark-600 p-3">
-        <p class="text-[9px] md:text-[10px] text-dark-400">Total</p>
-        <p class="text-base md:text-lg font-bold text-gold-500" id="fin-total">$0</p>
-       </div>
-      </div>
-      <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
-       <h4 class="text-xs md:text-sm font-semibold mb-3">Historial</h4>
-       <div id="finance-history" class="space-y-2 text-xs"></div>
-      </div>
-     </div><div id="view-tickets" class="fade-in hidden">
-      <h3 class="text-xs md:text-sm font-semibold mb-4">Tickets</h3>
-      <div id="tickets-list" class="space-y-2 md:space-y-3"></div>
-     </div>
-    </div>
-   </main>
-  </div><div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50"></div><div id="ticket-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
-   <div class="bg-white text-dark-900 rounded-xl w-full max-w-sm p-4 md:p-6 max-h-[90%] overflow-y-auto">
-    <div id="ticket-content" class="text-center"></div>
-   </div>
+    </main>
   </div>
+
+  <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50"></div>
+  
+  <div id="ticket-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="bg-white text-dark-900 rounded-xl w-full max-w-sm p-5 md:p-6 max-h-[90%] overflow-y-auto shadow-2xl">
+      <div id="ticket-content" class="text-center"></div>
+      <div class="flex gap-3 mt-6 no-print">
+        <button onclick="window.print()" class="flex-1 bg-blue-500 text-white py-2.5 rounded-lg text-xs md:text-sm font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          Imprimir
+        </button>
+        <button onclick="closeTicketModal()" class="flex-1 bg-dark-900 text-white py-2.5 border border-dark-600 rounded-lg text-xs md:text-sm font-semibold hover:bg-dark-800 transition-colors">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Inicializar Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBG6D4sN0T4nkbZma5ZVUAI2LNOrlwPQiA",
+      authDomain: "barberia-9c251.firebaseapp.com",
+      projectId: "barberia-9c251",
+      storageBucket: "barberia-9c251.firebasestorage.app",
+      messagingSenderId: "777950275602",
+      appId: "1:777950275602:web:5146d3a2f96df2e56450cb",
+      measurementId: "G-XV8KFGW068"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const analytics = firebase.analytics();
+
     // Configuración
     const config = {
       business_name: 'Barbería Cochilocos',
@@ -362,28 +648,80 @@
     let ticketCounter = 1000;
     let currentCalendarDate = new Date();
     let currentSalesCalendarDate = new Date();
+    let financeChartInstance = null; // Instancia global de Chart.js
 
-    // Inventario dinámico
-    let inventory = {
+    // Data de Servicios Dinámica
+    let defaultServices = {
+      'Corte Clásico': { price: 120, icon: 'scissors' },
+      'Corte + Barba': { price: 180, icon: 'scissors' },
+      'Fade Premium': { price: 220, icon: 'scissors' },
+      'Tinte': { price: 350, icon: 'palette' },
+      'Barba': { price: 80, icon: 'scissors' },
+      'Lavado': { price: 60, icon: 'droplets' }
+    };
+    let servicesData = {};
+
+    function saveServices() {
+        db.collection('system').doc('services').set({ data: servicesData })
+          .catch(e => console.error("Error al guardar servicios en Firebase", e));
+    }
+
+    async function loadServices() {
+        try {
+            const doc = await db.collection('system').doc('services').get();
+            if(doc.exists && doc.data().data) {
+                servicesData = doc.data().data;
+            } else {
+                servicesData = defaultServices;
+            }
+        } catch(e) {
+            console.error("No se pudo cargar servicios, usando defecto.", e);
+            servicesData = defaultServices;
+        }
+    }
+
+    // Inventario dinámico de Productos inicial
+    // 1. Data de Productos
+    let defaultInventory = {
       'Gel': { price: 90, stock: 24, desc: 'Fijación fuerte' },
       'Cera': { price: 120, stock: 18, desc: 'Acabado mate' },
       'Shampoo': { price: 150, stock: 5, desc: 'Anti-caspa' },
       'Pomada': { price: 110, stock: 15, desc: 'Brillo natural' },
       'Aceite Barba': { price: 180, stock: 3, desc: 'Hidratante' }
     };
+    let inventory = {};
 
-    // Función para renderizar los productos en POS y en Inventario
+    // 2. Funciones de Firebase para Inventario
+    function saveInventory() {
+        db.collection('system').doc('inventory').set({ data: inventory })
+          .catch(e => console.error("Error al guardar inventario en Firebase", e));
+    }
+
+    async function loadInventory() {
+        try {
+            const doc = await db.collection('system').doc('inventory').get();
+            if(doc.exists && doc.data().data) {
+                inventory = doc.data().data;
+            } else {
+                inventory = defaultInventory;
+            }
+        } catch(e) {
+            console.error("No se pudo cargar el inventario de Firebase.", e);
+            inventory = defaultInventory;
+        }
+    }
+
+    // 3. Renderizar Productos
     function renderDynamicProducts() {
       const posGrid = document.getElementById('pos-dynamic-products');
       const invGrid = document.getElementById('inventory-grid');
-      
       let posHTML = '';
       let invHTML = '';
 
       Object.keys(inventory).forEach(key => {
         const p = inventory[key];
         
-        // Render POS
+        // Tarjetas para el Punto de Venta (POS)
         posHTML += `<button onclick="addToCart('product','${key}',${p.price})" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition relative overflow-hidden">
           <i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i>
           <p class="text-xs font-medium">${key}</p>
@@ -391,14 +729,14 @@
           <span class="absolute top-1 right-1 text-[8px] bg-dark-700 px-1 rounded text-dark-300">Stock: ${p.stock}</span>
         </button>`;
 
-        // Render Inventario (Con botones de Entradas y Salidas)
-        invHTML += `<div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+        // Tarjetas para el Inventario (Productos)
+        invHTML += `<div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 hover:border-gold-500 transition">
           <div class="flex justify-between items-start">
            <div>
             <p class="text-xs md:text-sm font-semibold">${key}</p>
             <p class="text-[9px] md:text-[10px] text-dark-400">${p.desc}</p>
            </div>
-           <span class="text-[8px] md:text-[10px] ${p.stock < 5 ? 'bg-red-400/10 text-red-400' : 'bg-green-400/10 text-green-400'} px-2 py-0.5 rounded font-bold">Stock: ${p.stock}</span>
+           <span class="text-[8px] md:text-[10px] ${p.stock <= 5 ? 'bg-red-400/10 text-red-400 border border-red-400/20' : 'bg-green-400/10 text-green-400 border border-green-400/20'} px-2 py-0.5 rounded font-bold">Stock: ${p.stock}</span>
           </div>
           <p class="text-gold-500 font-bold mt-2 mb-3">$${p.price}</p>
           <div class="flex gap-2">
@@ -408,18 +746,48 @@
          </div>`;
       });
 
-      if(posGrid) posGrid.innerHTML = posHTML;
-      if(invGrid) invGrid.innerHTML = invHTML;
-      if(window.lucide) lucide.createIcons();
+      if (posGrid) posGrid.innerHTML = posHTML;
+      if (invGrid) invGrid.innerHTML = invHTML;
+      if (window.lucide) lucide.createIcons();
     }
 
-    // Lógica de Entradas y Salidas
+    // 4. Crear, Ajustar Stock y Editar Precio
+    function saveNewProduct() {
+      const name = document.getElementById('new-prod-name').value.trim();
+      const price = parseFloat(document.getElementById('new-prod-price').value);
+      const stock = parseInt(document.getElementById('new-prod-stock').value);
+      const desc = document.getElementById('new-prod-desc').value.trim();
+
+      if(!name || isNaN(price) || isNaN(stock)) { 
+        showToast('Llena el nombre, precio y stock correctamente', 'red'); 
+        return; 
+      }
+      if(inventory[name]) { 
+        showToast('Ya existe un producto con ese nombre', 'red'); 
+        return; 
+      }
+
+      inventory[name] = { price, stock, desc };
+      saveInventory(); 
+      renderDynamicProducts();
+      updateDashboard();
+      
+      document.getElementById('new-prod-name').value = '';
+      document.getElementById('new-prod-price').value = '';
+      document.getElementById('new-prod-stock').value = '';
+      document.getElementById('new-prod-desc').value = '';
+      document.getElementById('product-form').classList.add('hidden');
+      showToast('Producto agregado al inventario', 'green');
+    }
+
     function adjustStock(name) {
-      const val = prompt(`Stock actual de ${name}: ${inventory[name].stock}\nIntroduce cantidad a SUMAR (o usa un número con guión - para RESTAR):`);
+      const val = prompt(`Stock actual de ${name}: ${inventory[name].stock}\nIntroduce cantidad a SUMAR (o usa un número negativo con guión - para RESTAR):`);
       if (val !== null && val.trim() !== '' && !isNaN(val)) {
         inventory[name].stock += parseInt(val);
-        if(inventory[name].stock < 0) inventory[name].stock = 0; // No permitir negativos
+        if (inventory[name].stock < 0) inventory[name].stock = 0; 
+        saveInventory(); 
         renderDynamicProducts();
+        updateDashboard();
         showToast(`Stock de ${name} actualizado`);
       }
     }
@@ -428,47 +796,327 @@
       const val = prompt(`Precio actual de ${name}: $${inventory[name].price}\nIntroduce NUEVO PRECIO:`);
       if (val !== null && val.trim() !== '' && !isNaN(val) && val > 0) {
         inventory[name].price = parseFloat(val);
-        renderDynamicProducts(); // Actualizar el precio en los botones
+        saveInventory(); 
+        renderDynamicProducts(); 
         showToast(`Precio de ${name} actualizado`);
       }
     }
 
-    // LocalStorage Functions
-    function saveData() {
-      localStorage.setItem('barberia_data', JSON.stringify(allData));
+    function saveInventory() {
+        db.collection('system').doc('inventory').set({ data: inventory })
+          .catch(e => console.error("Error al guardar inventario en Firebase", e));
     }
 
-    function loadData() {
-      const saved = localStorage.getItem('barberia_data');
-      if (saved) {
+    async function loadInventory() {
         try {
-          allData = JSON.parse(saved);
-        } catch (e) {
-          console.error('Error loading data:', e);
-          allData = [];
+            const doc = await db.collection('system').doc('inventory').get();
+            if(doc.exists && doc.data().data) {
+                inventory = doc.data().data;
+            } else {
+                inventory = defaultInventory;
+            }
+        } catch(e) {
+            console.error("No se pudo cargar el inventario, usando valores por defecto.", e);
+            inventory = defaultInventory;
         }
+    }
+
+    function saveNewProduct() {
+      const name = document.getElementById('new-prod-name').value.trim();
+      const price = parseFloat(document.getElementById('new-prod-price').value);
+      const stock = parseInt(document.getElementById('new-prod-stock').value);
+      const desc = document.getElementById('new-prod-desc').value.trim();
+
+      if(!name || isNaN(price) || isNaN(stock)) { showToast('Llena el nombre, precio y stock correctamente', 'red'); return; }
+      if(inventory[name]) { showToast('Ya existe un producto con ese nombre', 'red'); return; }
+
+      inventory[name] = { price, stock, desc };
+      saveInventory();
+      renderDynamicProducts();
+      updateDashboard(); // Reflejar nuevo inventario en dashboard
+      
+      // Limpiar y ocultar form
+      document.getElementById('new-prod-name').value = '';
+      document.getElementById('new-prod-price').value = '';
+      document.getElementById('new-prod-stock').value = '';
+      document.getElementById('new-prod-desc').value = '';
+      document.getElementById('product-form').classList.add('hidden');
+      showToast('Producto agregado al inventario', 'green');
+    }
+
+   // Renderizar Servicios (POS, Vista Servicios y Select de Agenda)
+   function renderServices() {
+      const posGrid = document.getElementById('pos-dynamic-services');
+      const viewGrid = document.getElementById('services-grid');
+      const aptSelect = document.getElementById('apt-service'); // Select de la agenda
+      
+      let posHTML = '';
+      let viewHTML = '';
+      let selectHTML = '';
+
+      Object.keys(servicesData).forEach(key => {
+        const s = servicesData[key];
+        
+        // Vista en POS
+        posHTML += `<button onclick="addToCart('service','${key}',${s.price})" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition">
+          <i data-lucide="${s.icon}" class="w-3 md:w-4 h-3 md:h-4 text-gold-500 mb-1"></i>
+          <p class="text-xs font-medium">${key}</p>
+          <p class="text-[9px] md:text-[10px] text-gold-500">$${s.price}</p>
+        </button>`;
+
+        // Vista en Catálogo (Ahora con botón de eliminar)
+        viewHTML += `<div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-gold-500/10 flex items-center justify-center">
+                <i data-lucide="${s.icon}" class="w-4 h-4 text-gold-500"></i>
+              </div>
+              <div><p class="font-semibold text-xs md:text-sm">${key}</p></div>
+            </div>
+            <span class="text-gold-500 font-bold">$${s.price}</span>
+          </div>
+          
+          <div class="flex gap-2 mt-auto">
+            <button onclick="editServicePrice('${key}')" class="flex-1 bg-dark-700 hover:bg-dark-600 text-[10px] md:text-xs py-1.5 rounded transition">Editar</button>
+            <button onclick="deleteService('${key}')" class="flex-1 bg-red-500/10 text-red-400 hover:bg-red-500/20 text-[10px] md:text-xs py-1.5 rounded transition">Eliminar</button>
+          </div>
+        </div>`;
+
+        // Opciones para la Agenda
+        selectHTML += `<option value="${key}">${key}</option>`;
+      });
+
+      if(posGrid) posGrid.innerHTML = posHTML;
+      if(viewGrid) viewGrid.innerHTML = viewHTML;
+      if(aptSelect) aptSelect.innerHTML = selectHTML;
+      
+      if(window.lucide) lucide.createIcons();
+    }
+
+    // Guardar nuevo servicio
+    function saveNewService() {
+      const name = document.getElementById('new-serv-name').value.trim();
+      const price = parseFloat(document.getElementById('new-serv-price').value);
+      const icon = document.getElementById('new-serv-icon').value;
+
+      if(!name || isNaN(price)) { showToast('Llena el nombre y precio correctamente', 'red'); return; }
+      if(servicesData[name]) { showToast('Ya existe un servicio con ese nombre', 'red'); return; }
+
+      servicesData[name] = { price, icon };
+      saveServices();
+      renderServices();
+      
+      // Limpiar y ocultar form
+      document.getElementById('new-serv-name').value = '';
+      document.getElementById('new-serv-price').value = '';
+      document.getElementById('service-form').classList.add('hidden');
+      showToast('Servicio agregado exitosamente', 'green');
+    }
+
+    // Editar precio existente
+    function editServicePrice(name) {
+      const val = prompt(`Precio actual de ${name}: $${servicesData[name].price}\nIntroduce NUEVO PRECIO:`);
+      if (val !== null && val.trim() !== '' && !isNaN(val) && val > 0) {
+        servicesData[name].price = parseFloat(val);
+        saveServices();
+        renderServices(); 
+        showToast(`Precio de ${name} actualizado`);
+      }
+    }
+
+    // Eliminar servicio existente
+    function deleteService(name) {
+      if(confirm(`¿Estás seguro de que deseas ELIMINAR el servicio "${name}" del catálogo?`)) {
+        delete servicesData[name];
+        
+        saveServices(); // Guardamos los cambios en Firebase
+        renderServices(); // Refrescamos el catálogo, el POS y la agenda
+        
+        showToast(`Servicio "${name}" eliminado`, 'red');
+      }
+    }
+
+    // Renderizar Productos (POS y Vista Inventario)
+    function renderDynamicProducts() {
+      const posGrid = document.getElementById('pos-dynamic-products');
+      const invGrid = document.getElementById('inventory-grid');
+      let posHTML = '';
+      let invHTML = '';
+
+      Object.keys(inventory).forEach(key => {
+        const p = inventory[key];
+        
+        posHTML += `<button onclick="addToCart('product','${key}',${p.price})" class="bg-dark-800 border border-dark-600 rounded-lg p-2 md:p-3 text-left hover:border-gold-500 transition relative overflow-hidden">
+          <i data-lucide="flask-round" class="w-3 md:w-4 h-3 md:h-4 text-blue-400 mb-1"></i>
+          <p class="text-xs font-medium">${key}</p>
+          <p class="text-[9px] md:text-[10px] text-gold-500">$${p.price}</p>
+          <span class="absolute top-1 right-1 text-[8px] bg-dark-700 px-1 rounded text-dark-300">Stock: ${p.stock}</span>
+        </button>`;
+
+        invHTML += `<div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4">
+          <div class="flex justify-between items-start">
+           <div>
+            <p class="text-xs md:text-sm font-semibold">${key}</p>
+            <p class="text-[9px] md:text-[10px] text-dark-400">${p.desc}</p>
+           </div>
+           <span class="text-[8px] md:text-[10px] ${p.stock <= 5 ? 'bg-red-400/10 text-red-400' : 'bg-green-400/10 text-green-400'} px-2 py-0.5 rounded font-bold">Stock: ${p.stock}</span>
+          </div>
+          <p class="text-gold-500 font-bold mt-2 mb-3">$${p.price}</p>
+          <div class="flex gap-2">
+            <button onclick="adjustStock('${key}')" class="flex-1 bg-dark-700 hover:bg-dark-600 text-[9px] md:text-[10px] py-1.5 rounded transition">+/- Stock</button>
+            <button onclick="editProductPrice('${key}')" class="flex-1 bg-dark-700 hover:bg-dark-600 text-[9px] md:text-[10px] py-1.5 rounded transition">Editar Precio</button>
+          </div>
+         </div>`;
+      });
+
+      if (posGrid) posGrid.innerHTML = posHTML;
+      if (invGrid) invGrid.innerHTML = invHTML;
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Funciones Stock y Precios
+    function adjustStock(name) {
+      const val = prompt(`Stock actual de ${name}: ${inventory[name].stock}\nIntroduce cantidad a SUMAR (o usa un número con guión - para RESTAR):`);
+      if (val !== null && val.trim() !== '' && !isNaN(val)) {
+        inventory[name].stock += parseInt(val);
+        if (inventory[name].stock < 0) inventory[name].stock = 0; 
+        saveInventory();
+        renderDynamicProducts();
+        updateDashboard();
+        showToast(`Stock de ${name} actualizado`);
+      }
+    }
+
+    function editProductPrice(name) {
+      const val = prompt(`Precio actual de ${name}: $${inventory[name].price}\nIntroduce NUEVO PRECIO:`);
+      if (val !== null && val.trim() !== '' && !isNaN(val) && val > 0) {
+        inventory[name].price = parseFloat(val);
+        saveInventory();
+        renderDynamicProducts(); 
+        showToast(`Precio de ${name} actualizado`);
+      }
+    }
+
+    // --- LÓGICA DE EMPLEADOS ---
+    let defaultEmployees = {
+      'Carlos': { role: 'Barbero Senior', theme: 'gold' },
+      'Miguel': { role: 'Barbero', theme: 'blue' },
+      'Jesús': { role: 'Barbero Jr', theme: 'purple' }
+    };
+    let employeesData = {};
+
+    function saveEmployees() {
+        db.collection('system').doc('employees').set({ data: employeesData })
+          .catch(e => console.error("Error al guardar empleados en Firebase", e));
+    }
+
+    async function loadEmployees() {
+        try {
+            const doc = await db.collection('system').doc('employees').get();
+            if(doc.exists && doc.data().data) {
+                employeesData = doc.data().data;
+            } else {
+                employeesData = defaultEmployees;
+            }
+        } catch(e) {
+            console.error("No se pudo cargar empleados, usando defecto.", e);
+            employeesData = defaultEmployees;
+        }
+    }
+
+    function saveNewEmployee() {
+      const name = document.getElementById('new-emp-name').value.trim();
+      const role = document.getElementById('new-emp-role').value.trim() || 'Barbero';
+      
+      if(!name) { showToast('Ingresa el nombre del empleado', 'red'); return; }
+      if(employeesData[name]) { showToast('Ya existe un empleado con ese nombre', 'red'); return; }
+
+      // Asignar un color aleatorio para el diseño de su tarjeta
+      const themes = ['gold', 'blue', 'purple', 'green', 'red'];
+      const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+
+      employeesData[name] = { role: role, theme: randomTheme };
+      saveEmployees();
+      
+      // Limpiar formulario
+      document.getElementById('new-emp-name').value = '';
+      document.getElementById('new-emp-role').value = '';
+      document.getElementById('employee-form').classList.add('hidden');
+      
+      updateEmployeeStats(); // Refresca las tarjetas y los selectores
+      showToast('Empleado agregado exitosamente', 'green');
+    }
+
+    // Firebase Data
+    function saveData() { 
+        db.collection('system').doc('allData').set({ data: allData })
+          .catch(e => console.error("Error al guardar datos en Firebase:", e)); 
+    }
+    
+    async function loadData() {
+      try {
+        const doc = await db.collection('system').doc('allData').get();
+        if (doc.exists && doc.data().data) { 
+            allData = doc.data().data; 
+        } else { 
+            allData = []; 
+        }
+      } catch (e) {
+          console.error("Error al obtener datos:", e);
+          allData = []; 
+      }
+      
+      // Calcular contador de tickets basado en historial
+      const ventas = allData.filter(d => d.type?.startsWith('sale_') && d.notes?.startsWith('Ticket #'));
+      if(ventas.length > 0) {
+        const last = ventas[ventas.length -1].notes.match(/\d+/);
+        if(last) ticketCounter = parseInt(last[0]);
       }
     }
 
     function addRecord(record) {
-      if (allData.length >= 999) {
-        showToast('Límite de registros alcanzado', 'red');
-        return false;
-      }
-      record.id = Date.now().toString();
+      if (allData.length >= 2000) { showToast('Límite de registros alcanzado', 'red'); return false; }
+      record.id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
       allData.push(record);
       saveData();
       updateAllViews();
       return true;
     }
 
-    function deleteRecord(id) {
-      const idx = allData.findIndex(r => r.id === id);
-      if (idx >= 0) {
-        allData.splice(idx, 1);
-        saveData();
-        updateAllViews();
-      }
+    function saveExpense() {
+        const concept = document.getElementById('exp-concept').value.trim();
+        const amount = parseFloat(document.getElementById('exp-amount').value);
+        if(!concept || isNaN(amount) || amount <= 0) { showToast('Ingresa un concepto y monto válidos', 'red'); return; }
+
+        if(addRecord({
+            type: 'expense',
+            concept: concept,
+            amount: amount,
+            date: new Date().toISOString()
+        })) {
+            document.getElementById('exp-concept').value = '';
+            document.getElementById('exp-amount').value = '';
+            showToast('Gasto registrado', 'green');
+        }
+    }
+
+    // Eliminar Ticket
+    function deleteTicket(ticketNotes) {
+      if(!confirm(`¿Estás seguro de ELIMINAR el ${ticketNotes}? Se revertirán las ganancias y se devolverá el stock de productos al inventario.`)) return;
+
+      const itemsToDelete = allData.filter(d => d.notes === ticketNotes);
+      itemsToDelete.forEach(item => {
+        if (item.type === 'sale_product' && inventory[item.product]) {
+          inventory[item.product].stock += (item.quantity || 1);
+        }
+      });
+      saveInventory();
+
+      allData = allData.filter(d => d.notes !== ticketNotes);
+      saveData();
+      renderDynamicProducts(); 
+      updateAllViews(); 
+      showToast('Venta eliminada exitosamente', 'red');
     }
 
     function updateAllViews() {
@@ -485,50 +1133,39 @@
       document.getElementById('view-' + view).classList.remove('hidden');
       document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
       document.querySelector(`[data-nav="${view}"]`)?.classList.add('active');
-      const titles = { dashboard:'Dashboard', pos:'POS', appointments:'Agenda', clients:'Clientes', services:'Servicios', products:'Productos', employees:'Empleados', finance:'Finanzas', tickets:'Tickets' };
+      const titles = { dashboard: 'Dashboard', pos: 'Punto de Venta', appointments: 'Agenda', clients: 'Directorio de Clientes', services: 'Catálogo de Servicios', products: 'Inventario de Productos', employees: 'Equipo de Trabajo', finance: 'Módulo de Finanzas', tickets: 'Historial de Tickets' };
       document.getElementById('page-title').textContent = titles[view] || '';
       document.getElementById('sidebar').classList.add('-translate-x-full');
       if (view === 'appointments') renderCalendar();
       if (view === 'dashboard') renderSalesCalendar();
     }
 
-    function toggleSidebar() {
-      const s = document.getElementById('sidebar');
-      s.classList.toggle('-translate-x-full');
-    }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
 
-    // --- NUEVAS FUNCIONES ACTUALIZADAS DE POS ---
-    
+    // --- POS LÓGICA ---
     function addToCart(type, name, price) {
       const existing = cart.find(i => i.name === name);
-      
-      // Bloqueo por falta de stock
       if (type === 'product') {
         const currentStock = inventory[name]?.stock || 0;
         const requestedQty = existing ? existing.qty + 1 : 1;
-        if (requestedQty > currentStock) {
-          showToast(`Stock insuficiente. Solo quedan ${currentStock} de ${name}`, 'red');
-          return;
-        }
+        if (requestedQty > currentStock) { showToast(`Stock insuficiente de ${name}`, 'red'); return; }
       }
-
-      if (existing) existing.qty++; else cart.push({type, name, price, qty:1});
+      if (existing) existing.qty++; else cart.push({ type, name, price, qty: 1 });
       renderCart();
     }
 
     function calculateChange() {
-      const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
+      const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
       const tax = Math.round(subtotal * 0.16);
       const total = subtotal + tax;
-      
+
       const method = document.getElementById('pos-method')?.value || 'Efectivo';
       const paymentInput = document.getElementById('pos-payment');
       const changeEl = document.getElementById('cart-change');
-      
+
       if (!paymentInput || !changeEl) return;
 
-      // Si es tarjeta/transferencia, inhabilitar input o forzar pago total
-      if(method !== 'Efectivo') {
+      if (method !== 'Efectivo') {
         paymentInput.value = total;
         paymentInput.disabled = true;
         changeEl.textContent = '$0.00';
@@ -539,23 +1176,22 @@
       }
 
       const payment = parseFloat(paymentInput.value) || 0;
-
       if (payment >= total && total > 0) {
         changeEl.textContent = '$' + (payment - total).toFixed(2);
         changeEl.className = 'text-green-400 font-bold text-[9px] md:text-xs';
       } else {
         if (payment > 0 && payment < total) {
-            changeEl.textContent = 'Faltan $' + (total - payment).toFixed(2);
-            changeEl.className = 'text-red-400 font-bold text-[9px] md:text-xs';
+          changeEl.textContent = 'Faltan $' + (total - payment).toFixed(2);
+          changeEl.className = 'text-red-400 font-bold text-[9px] md:text-xs';
         } else {
-            changeEl.textContent = '$0.00';
-            changeEl.className = 'text-green-400 font-bold text-[9px] md:text-xs';
+          changeEl.textContent = '$0.00';
+          changeEl.className = 'text-green-400 font-bold text-[9px] md:text-xs';
         }
       }
     }
 
     function processSale() {
-      if (cart.length === 0) { showToast('Agrega items', 'red'); return; }
+      if (cart.length === 0) { alert('❌ Agrega al menos un servicio o producto al carrito.'); return; }
 
       const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
       const tax = Math.round(subtotal * 0.16);
@@ -565,66 +1201,52 @@
       const paymentInputVal = document.getElementById('pos-payment').value;
       const payment = method === 'Efectivo' ? (parseFloat(paymentInputVal) || 0) : finalTotal;
 
-      // Validar efectivo
       if (method === 'Efectivo' && payment < finalTotal) {
-        showToast('Efectivo insuficiente', 'red');
+        alert(`❌ Efectivo insuficiente. El total es $${finalTotal} pero solo ingresaste $${payment}.`);
         return;
       }
-
+      
       const change = method === 'Efectivo' ? payment - finalTotal : 0;
       const client = document.getElementById('pos-client').value || 'Cliente General';
       const employee = document.getElementById('pos-employee').value;
       ticketCounter++;
 
       for (const item of cart) {
-        // RESTAR STOCK SI ES PRODUCTO
-        if(item.type === 'product' && inventory[item.name]) {
-          inventory[item.name].stock -= item.qty;
-        }
-
+        if (item.type === 'product' && inventory[item.name]) inventory[item.name].stock -= item.qty;
         if (!addRecord({
           type: item.type === 'service' ? 'sale_service' : 'sale_product',
-          client_name: client,
-          client_phone: '',
-          service: item.type === 'service' ? item.name : '',
-          product: item.type === 'product' ? item.name : '',
-          employee: employee,
-          amount: item.price * item.qty,
-          date: new Date().toISOString(),
-          status: 'completed',
-          notes: `Ticket #${ticketCounter} - ${method}`,
-          quantity: item.qty
+          client_name: client, client_phone: '', service: item.type === 'service' ? item.name : '',
+          product: item.type === 'product' ? item.name : '', employee: employee, amount: item.price * item.qty,
+          date: new Date().toISOString(), status: 'completed', notes: `Ticket #${ticketCounter} - ${method}`, quantity: item.qty
         })) return;
       }
 
-      renderDynamicProducts(); // Actualizar UI de productos (refresca stock en pantalla)
+      saveInventory();
+      renderDynamicProducts(); 
       showTicket(client, employee, cart, subtotal, payment, change, method);
-      
+
       cart = [];
       renderCart();
       document.getElementById('pos-client').value = '';
-      if(document.getElementById('pos-payment')) document.getElementById('pos-payment').value = '';
-      calculateChange(); 
+      if (document.getElementById('pos-payment')) document.getElementById('pos-payment').value = '';
+      calculateChange();
       showToast('¡Venta completada!');
+      lucide.createIcons();
     }
 
-    // Ticket Formato Térmico
     function showTicket(client, employee, items, subtotal, payment, change, method) {
       const tax = Math.round(subtotal * 0.16);
       const finalTotal = subtotal + tax;
       const content = document.getElementById('ticket-content');
       
-      // Diseño simulando impresora térmica
       content.innerHTML = `
-        <div style="font-family: 'Courier New', Courier, monospace; width: 100%; max-width: 320px; margin: 0 auto; color: black; background: white; padding: 20px 10px; border: 1px solid #eee;">
-          
+        <div style="font-family: 'Courier New', Courier, monospace; width: 100%; color: black; background: white; padding: 10px 0;">
           <div style="text-align: center; margin-bottom: 15px;">
-            <h2 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">${config.business_name}</h2>
-            <p style="font-size: 12px; margin: 2px 0;">${config.business_address}</p>
-            <p style="font-size: 12px; margin: 2px 0;">Tel: ${config.business_phone}</p>
+            <h2 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Barbería Cochilocos</h2>
+            <p style="font-size: 12px; margin: 2px 0;">Av. Principal #123, Centro</p>
+            <p style="font-size: 12px; margin: 2px 0;">Tel: (555) 123-4567</p>
             <div style="border-top: 1px dashed black; margin: 10px 0;"></div>
           </div>
-          
           <div style="font-size: 12px; margin-bottom: 15px; text-align: left;">
             <p style="margin: 2px 0;"><strong>Ticket:</strong> #${ticketCounter}</p>
             <p style="margin: 2px 0;"><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-MX')} ${new Date().toLocaleTimeString('es-MX')}</p>
@@ -632,99 +1254,68 @@
             <p style="margin: 2px 0;"><strong>Cliente:</strong> ${client}</p>
             <div style="border-top: 1px dashed black; margin: 10px 0;"></div>
           </div>
-
           <div style="font-size: 12px; margin-bottom: 15px;">
             <table style="width: 100%; text-align: left; border-collapse: collapse;">
               <thead>
-                <tr>
-                  <th style="padding-bottom: 5px; width: 10%;">Cant</th>
-                  <th style="padding-bottom: 5px; width: 60%;">Desc</th>
-                  <th style="padding-bottom: 5px; text-align: right;">Importe</th>
-                </tr>
+                <tr><th style="padding-bottom: 5px; width: 15%;">Cant</th><th style="padding-bottom: 5px; width: 55%;">Desc</th><th style="padding-bottom: 5px; text-align: right;">Importe</th></tr>
               </thead>
               <tbody>
-                ${items.map(i => `<tr>
-                  <td style="vertical-align: top; padding: 2px 0;">${i.qty}</td>
-                  <td style="vertical-align: top; padding: 2px 0;">${i.name}</td>
-                  <td style="vertical-align: top; text-align: right; padding: 2px 0;">$${(i.price*i.qty).toFixed(2)}</td>
-                </tr>`).join('')}
+                ${items.map(i => `<tr><td style="vertical-align: top; padding: 2px 0;">${i.qty}</td><td style="vertical-align: top; padding: 2px 0;">${i.name}</td><td style="vertical-align: top; text-align: right; padding: 2px 0;">$${(i.price*i.qty).toFixed(2)}</td></tr>`).join('')}
               </tbody>
             </table>
           </div>
-
           <div style="border-top: 1px dashed black; padding-top: 10px; font-size: 12px; margin-bottom: 15px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>Subtotal:</span><span>$${subtotal.toFixed(2)}</span></div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>IVA (16%):</span><span>$${tax.toFixed(2)}</span></div>
             <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-top: 5px;"><span>TOTAL:</span><span>$${finalTotal.toFixed(2)}</span></div>
           </div>
-
           <div style="border-top: 1px dashed black; padding-top: 10px; font-size: 12px; margin-bottom: 15px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>PAGÓ CON (${method}):</span><span>$${payment.toFixed(2)}</span></div>
             <div style="display: flex; justify-content: space-between; font-weight: bold;"><span>SU CAMBIO:</span><span>$${change.toFixed(2)}</span></div>
           </div>
-
           <div style="text-align: center; font-size: 11px; margin-top: 20px;">
             <p style="margin: 0;">*** GRACIAS POR SU PREFERENCIA ***</p>
           </div>
         </div>
       `;
-      
-      // Inyectar o actualizar botones del modal para poder imprimir
-      let modalActions = document.getElementById('ticket-actions');
-      if(!modalActions) {
-        modalActions = document.createElement('div');
-        modalActions.id = 'ticket-actions';
-        modalActions.className = 'flex gap-2 mt-4 no-print';
-        document.getElementById('ticket-content').parentNode.appendChild(modalActions);
-        
-        // Quitar el botón viejo de cerrar que tenías antes
-        const oldBtn = document.querySelector('#ticket-modal > div > button:last-child');
-        if(oldBtn && oldBtn.id !== 'ticket-actions') oldBtn.remove();
-      }
-
-      modalActions.innerHTML = `
-        <button onclick="window.print()" class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-xs md:text-sm font-semibold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Imprimir</button>
-        <button onclick="closeTicketModal()" class="flex-1 bg-dark-900 text-white py-2 border border-dark-600 rounded-lg text-xs md:text-sm font-semibold hover:bg-dark-800 transition">Cerrar</button>
-      `;
-
       document.getElementById('ticket-modal').classList.remove('hidden');
-      if(window.lucide) lucide.createIcons();
     }
 
-    // --- FIN DE NUEVAS FUNCIONES DE POS ---
+    function closeTicketModal() { document.getElementById('ticket-modal').classList.add('hidden'); }
 
-    function removeFromCart(index) { cart.splice(index,1); renderCart(); }
+    function removeFromCart(index) { cart.splice(index, 1); renderCart(); }
 
     function renderCart() {
       const container = document.getElementById('cart-items');
       container.innerHTML = cart.length === 0 ? '<p class="text-[10px] md:text-[11px] text-dark-400 text-center py-3 md:py-4">Carrito vacío</p>' :
-        cart.map((item,i) => `<div class="flex justify-between items-center bg-dark-700 rounded-lg px-2 md:px-3 py-1.5 md:py-2">
+        cart.map((item, i) => `<div class="flex justify-between items-center bg-dark-700 rounded-lg px-2 md:px-3 py-1.5 md:py-2">
           <div><p class="text-[10px] md:text-[11px] font-medium">${item.name} x${item.qty}</p><p class="text-[8px] md:text-[9px] text-dark-400">${item.type === 'service' ? 'Servicio' : 'Producto'}</p></div>
           <div class="flex items-center gap-1 md:gap-2"><span class="text-[10px] md:text-[11px] text-gold-500 font-medium">$${item.price * item.qty}</span>
           <button onclick="removeFromCart(${i})" class="text-red-400 hover:text-red-300"><i data-lucide="x" class="w-3 h-3"></i></button></div>
         </div>`).join('');
-      const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
+      const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
       const tax = Math.round(subtotal * 0.16);
       document.getElementById('cart-subtotal').textContent = '$' + subtotal;
       document.getElementById('cart-tax').textContent = '$' + tax;
       document.getElementById('cart-total').textContent = '$' + (subtotal + tax);
-      calculateChange(); 
-      lucide.createIcons();
+      calculateChange();
+      if(window.lucide) lucide.createIcons();
     }
 
+    // --- AGENDA LÓGICA ---
     function renderCalendar() {
       const year = currentCalendarDate.getFullYear();
       const month = currentCalendarDate.getMonth();
       const today = new Date();
-      const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
       document.getElementById('calendar-month').textContent = `${monthNames[month]} ${year}`;
-      
+
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const daysInPrevMonth = new Date(year, month, 0).getDate();
       const grid = document.getElementById('calendar-grid');
       grid.innerHTML = '';
-      
+
       const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
       for (let i = adjustedFirstDay - 1; i >= 0; i--) {
         const day = daysInPrevMonth - i;
@@ -734,29 +1325,24 @@
         dayEl.disabled = true;
         grid.appendChild(dayEl);
       }
-      
+
       const appts = allData.filter(d => d.type === 'appointment').map(d => d.date?.split('T')[0]);
       for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const hasAppt = appts.includes(dateStr);
         const isToday = dateStr === today.toISOString().split('T')[0];
         const dayEl = document.createElement('button');
-        
-        if (isToday) {
-          dayEl.className = 'p-1.5 md:p-2 rounded-lg text-xs font-bold text-dark-900 bg-gold-500 border-2 border-gold-400 transition hover:bg-gold-400';
-        } else if (hasAppt) {
-          dayEl.className = 'p-1.5 md:p-2 rounded-lg text-xs font-bold text-white bg-blue-600 border-2 border-blue-500 transition hover:bg-blue-500';
-        } else {
-          dayEl.className = 'p-1.5 md:p-2 rounded-lg text-xs font-medium text-white bg-dark-700 border-2 border-dark-600 transition hover:border-gold-500 hover:bg-dark-600 cursor-pointer';
-        }
-        
+
+        if (isToday) dayEl.className = 'p-1.5 md:p-2 rounded-lg text-xs font-bold text-dark-900 bg-gold-500 border-2 border-gold-400 transition hover:bg-gold-400';
+        else if (hasAppt) dayEl.className = 'p-1.5 md:p-2 rounded-lg text-xs font-bold text-white bg-blue-600 border-2 border-blue-500 transition hover:bg-blue-500';
+        else dayEl.className = 'p-1.5 md:p-2 rounded-lg text-xs font-medium text-white bg-dark-700 border-2 border-dark-600 transition hover:border-gold-500 hover:bg-dark-600 cursor-pointer';
+
         dayEl.textContent = day;
         dayEl.onclick = () => selectCalendarDate(year, month, day);
         grid.appendChild(dayEl);
       }
-      
-      const totalCells = grid.children.length;
-      const remainingCells = 42 - totalCells;
+
+      const remainingCells = 42 - grid.children.length;
       for (let day = 1; day <= remainingCells; day++) {
         const dayEl = document.createElement('button');
         dayEl.className = 'p-1.5 md:p-2 rounded-lg text-xs text-dark-500 bg-dark-700 cursor-default border border-dark-600';
@@ -768,10 +1354,8 @@
 
     function prevMonth() { currentCalendarDate = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth() - 1, 1); renderCalendar(); }
     function nextMonth() { currentCalendarDate = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth() + 1, 1); renderCalendar(); }
-
     function selectCalendarDate(year, month, day) {
-      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      document.getElementById('apt-date').value = dateStr;
+      document.getElementById('apt-date').value = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       if (!document.getElementById('apt-time').value) document.getElementById('apt-time').value = '10:00';
       renderCalendar();
     }
@@ -780,181 +1364,553 @@
       const client = document.getElementById('apt-client').value;
       const dateVal = document.getElementById('apt-date').value;
       if (!client) { showToast('Ingresa nombre', 'red'); return; }
-      if (!dateVal) { showToast('Selecciona fecha', 'red'); return; }
+      if (!dateVal) { showToast('Selecciona fecha en el calendario', 'red'); return; }
       if (addRecord({
-        type: 'appointment',
-        client_name: client,
-        client_phone: document.getElementById('apt-phone').value,
-        service: document.getElementById('apt-service').value,
-        product: '',
-        employee: document.getElementById('apt-employee').value,
-        amount: 0,
-        date: dateVal + 'T' + (document.getElementById('apt-time').value || '10:00'),
-        status: 'confirmed',
-        notes: document.getElementById('apt-notes').value,
-        quantity: 1
+        type: 'appointment', client_name: client, client_phone: document.getElementById('apt-phone').value,
+        service: document.getElementById('apt-service').value, product: '', employee: document.getElementById('apt-employee').value,
+        amount: 0, date: dateVal + 'T' + (document.getElementById('apt-time').value || '10:00'), status: 'confirmed', notes: document.getElementById('apt-notes').value, quantity: 1
       })) {
         showToast('¡Cita guardada!');
-        document.getElementById('apt-client').value = '';
-        document.getElementById('apt-phone').value = '';
-        document.getElementById('apt-date').value = '';
-        document.getElementById('apt-notes').value = '';
-        renderCalendar();
-        updateAppointmentsList();
+        document.getElementById('apt-client').value = ''; document.getElementById('apt-phone').value = ''; document.getElementById('apt-date').value = ''; document.getElementById('apt-notes').value = '';
+        renderCalendar(); updateAppointmentsList();
       }
     }
 
     function updateAppointmentsList() {
       const appts = allData.filter(d => d.type === 'appointment');
       const container = document.getElementById('appointments-list');
-      if (appts.length === 0) { container.innerHTML = '<p class="text-xs text-dark-400 text-center py-6 md:py-8">Sin citas</p>'; return; }
-      container.innerHTML = appts.sort((a,b) => (b.date||'').localeCompare(a.date||'')).slice(0,20).map(a => {
-        const statusColors = { confirmed:'green', pending:'yellow', cancelled:'red', completed:'blue' };
-        const c = statusColors[a.status] || 'gray';
+      
+      if (appts.length === 0) { 
+        container.innerHTML = '<p class="text-xs text-dark-400 text-center py-6 md:py-8">Sin citas</p>'; 
+        return; 
+      }
+      
+      container.innerHTML = appts.sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 20).map(a => {
+        const c = { confirmed: 'green', pending: 'yellow', cancelled: 'red', completed: 'blue' }[a.status] || 'gray';
+        
+        // Verificamos si hay teléfono para mostrar el botón de WhatsApp
+        const waButton = a.client_phone ? `
+            <button onclick="sendWhatsAppReminder('${a.id}')" class="text-green-400 hover:text-green-300 transition bg-green-400/10 hover:bg-green-400/20 p-1.5 rounded-lg" title="Enviar recordatorio por WhatsApp">
+              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+            </button>` : '';
+
         return `<div class="bg-dark-800 rounded-lg border border-dark-600 p-2 md:p-3 flex justify-between items-center hover:border-gold-500 transition">
-          <div><p class="text-xs md:text-sm font-medium">${a.client_name}</p><p class="text-[9px] md:text-[10px] text-dark-400">${a.service} • ${a.employee} • ${formatDate(a.date)}</p></div>
-          <span class="text-[8px] md:text-[10px] bg-${c}-400/10 text-${c}-400 px-2 py-0.5 rounded capitalize">${a.status}</span>
+          <div>
+            <p class="text-xs md:text-sm font-medium">${a.client_name}</p>
+            <p class="text-[9px] md:text-[10px] text-dark-400">${a.service} • ${a.employee} • ${formatDate(a.date)}</p>
+          </div>
+          <div class="flex items-center gap-2 md:gap-3">
+            <span class="text-[8px] md:text-[10px] bg-${c}-400/10 text-${c}-400 px-2 py-0.5 rounded capitalize">${a.status}</span>
+            ${waButton}
+            <button onclick="deleteAppointment('${a.id}')" class="text-red-400 hover:text-red-300 transition bg-red-400/10 hover:bg-red-400/20 p-1.5 rounded-lg" title="Cancelar cita">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
         </div>`;
       }).join('');
+      
       renderCalendar();
+      if(window.lucide) lucide.createIcons();
     }
 
-    function showClientForm() { document.getElementById('client-form').classList.remove('hidden'); }
+    function deleteAppointment(id) {
+      if(confirm('¿Estás seguro de que deseas cancelar y eliminar esta cita?')) {
+        allData = allData.filter(d => d.id !== id);
+        
+        saveData();       // Guardamos en Firebase
+        updateAllViews(); // Refrescamos todas las vistas (Dashboard, Calendarios, etc.)
+        showToast('Cita cancelada correctamente', 'red');
+      }
+    }
 
+    function sendWhatsAppReminder(id) {
+      // 1. Buscar los datos de la cita
+      const apt = allData.find(d => d.id === id);
+      if (!apt || !apt.client_phone) {
+        showToast('Este cliente no tiene número registrado', 'red');
+        return;
+      }
+
+      // 2. Limpiar el teléfono de espacios, guiones o paréntesis usando RegEx
+      let phone = apt.client_phone.replace(/\D/g, '');
+      
+      // 3. Validación de código de país (+52 para México)
+      // Si el usuario ingresó 10 dígitos, le prefijamos el 52
+      if (phone.length === 10) {
+        phone = '52' + phone;
+      }
+
+      // 4. Formatear la fecha y hora para que sea legible en el mensaje
+      const aptDate = new Date(apt.date);
+      const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+      const timeOptions = { hour: '2-digit', minute: '2-digit' };
+      
+      const dateStr = aptDate.toLocaleDateString('es-MX', dateOptions);
+      const timeStr = aptDate.toLocaleTimeString('es-MX', timeOptions);
+
+      // 5. Construir la plantilla del mensaje
+      const message = `¡Hola ${apt.client_name}! 👋\n\nTe escribimos de *Barbería Cochilocos* 💈 para recordarte tu cita de *${apt.service}*.\n\n📅 Fecha: ${dateStr}\n⏰ Hora: ${timeStr}\n\nPor favor, confírmanos tu asistencia. ¡Te esperamos!`;
+
+      // 6. Codificar el mensaje en formato URI para enviarlo en la URL
+      const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+      // 7. Abrir WhatsApp Web o la App móvil
+      window.open(whatsappUrl, '_blank');
+    }
+
+    // --- CLIENTES LÓGICA ---
+    function showClientForm() { document.getElementById('client-form').classList.remove('hidden'); }
     function saveClient() {
       const name = document.getElementById('cl-name').value;
       if (!name) { showToast('Ingresa nombre', 'red'); return; }
-      if (addRecord({
-        type: 'client', client_name: name, client_phone: document.getElementById('cl-phone').value,
-        service: '', product: '', employee: '', amount: 0, date: new Date().toISOString(),
-        status: 'active', notes: '', quantity: 0
-      })) {
-        showToast('Cliente agregado');
+      if (addRecord({ type: 'client', client_name: name, client_phone: document.getElementById('cl-phone').value, date: new Date().toISOString() })) {
+        showToast('Cliente agregado exitosamente');
         document.getElementById('client-form').classList.add('hidden');
-        document.getElementById('cl-name').value='';
-        document.getElementById('cl-phone').value='';
+        document.getElementById('cl-name').value = ''; document.getElementById('cl-phone').value = '';
       }
     }
 
     function updateClientsList() {
       const clients = allData.filter(d => d.type === 'client');
       const container = document.getElementById('clients-list');
-      if (clients.length === 0) { container.innerHTML = '<p class="text-xs text-dark-400 text-center py-6 md:py-8">Sin clientes</p>'; return; }
-      container.innerHTML = clients.map(c => `<div class="bg-dark-800 rounded-lg border border-dark-600 p-2 md:p-3 flex items-center gap-3">
-        <div class="w-7 md:w-8 h-7 md:h-8 rounded-full bg-gold-500/20 flex items-center justify-center text-gold-500 font-bold text-xs">${(c.client_name||'?')[0].toUpperCase()}</div>
-        <div><p class="text-xs md:text-sm font-medium">${c.client_name}</p><p class="text-[8px] md:text-[9px] text-dark-400">${c.client_phone || 'Sin teléfono'}</p></div>
+      if(!container) return; 
+      if (clients.length === 0) { container.innerHTML = '<div class="col-span-full"><p class="text-xs text-dark-400 text-center py-6">Aún no hay clientes registrados.</p></div>'; return; }
+      container.innerHTML = clients.map(c => `<div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 flex items-center gap-3 hover:border-gold-500 transition">
+        <div class="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center text-gold-500 font-bold text-sm">${(c.client_name || '?')[0].toUpperCase()}</div>
+        <div><p class="text-xs md:text-sm font-medium">${c.client_name}</p><p class="text-[9px] md:text-[10px] text-dark-400 mt-0.5"><i data-lucide="phone" class="w-3 h-3 inline mr-1"></i>${c.client_phone || 'Sin teléfono'}</p></div>
       </div>`).join('');
+      lucide.createIcons();
     }
 
+    // --- ACTUALIZACIONES GENERALES ---
     function updateDashboard() {
       const today = new Date().toISOString().split('T')[0];
       const sales = allData.filter(d => d.type?.startsWith('sale_'));
-      const todaySales = sales.filter(s => (s.date||'').startsWith(today));
-      const todayTotal = todaySales.reduce((s,i) => s + (i.amount||0), 0);
-      const todayAppts = allData.filter(d => d.type === 'appointment' && (d.date||'').startsWith(today)).length;
-      const todayClients = new Set(todaySales.map(s => s.client_name)).size;
-      const todayProducts = sales.filter(s => s.type === 'sale_product' && (s.date||'').startsWith(today)).reduce((s,i) => s+(i.quantity||0),0);
+      const expensesData = allData.filter(d => d.type === 'expense');
+      
+      const todaySales = sales.filter(s => (s.date || '').startsWith(today));
+      const todayTotal = todaySales.reduce((s, i) => s + (i.amount || 0), 0);
+      const todayExpenses = expensesData.filter(e => (e.date || '').startsWith(today)).reduce((sum, e) => sum + (e.amount || 0), 0);
+      
+      const todayAppts = allData.filter(d => d.type === 'appointment' && (d.date || '').startsWith(today)).length;
+      const totalClients = allData.filter(d => d.type === 'client').length;
+      
+      // En lugar de ventas hoy, sumamos todo el stock de nuestro inventario
+      const totalStock = Object.values(inventory).reduce((sum, item) => sum + item.stock, 0);
 
-      const payroll = 150 * 3;
-      const expenses = 300;
-      const profit = todayTotal - payroll - expenses;
+      const payroll = 150 * 3; // Sueldo diario
+      const profit = todayTotal - todayExpenses - payroll;
 
       document.getElementById('stat-today').textContent = '$' + todayTotal.toLocaleString();
       document.getElementById('stat-appointments').textContent = todayAppts;
-      document.getElementById('stat-clients').textContent = todayClients;
-      document.getElementById('stat-products').textContent = todayProducts;
+      document.getElementById('stat-clients').textContent = totalClients; 
+      document.getElementById('stat-products').textContent = totalStock; 
+      
       document.getElementById('stat-payroll').textContent = '$' + payroll.toLocaleString();
-      document.getElementById('stat-expenses').textContent = '$' + expenses.toLocaleString();
+      document.getElementById('stat-expenses').textContent = '$' + todayExpenses.toLocaleString();
       document.getElementById('stat-profit').textContent = '$' + Math.max(0, profit).toLocaleString();
 
+     // ==========================================
+      // GRÁFICA DE VENTAS DE LA SEMANA (CORREGIDA)
+      // ==========================================
       const chart = document.getElementById('weekly-chart');
-      const days = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-      const maxVal = Math.max(1, ...days.map((_,i) => todayTotal * (0.5 + Math.random())));
-      chart.innerHTML = days.map((d,i) => {
-        const val = Math.round(todayTotal * (0.3 + Math.random() * 0.7));
-        const h = Math.max(10, (val / (maxVal||1)) * 100);
-        return `<div class="flex-1 flex flex-col items-center gap-1"><div class="w-full bg-gold-500/80 rounded-t" style="height:${h}%"></div><span class="text-[8px] md:text-[9px] text-dark-400">${d}</span></div>`;
+      const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+      const weeklyTotals = [0, 0, 0, 0, 0, 0, 0];
+      
+      const now = new Date();
+      const dayIndex = now.getDay() === 0 ? 6 : now.getDay() - 1; // Lunes=0, Domingo=6
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - dayIndex);
+      
+      // Crear un arreglo con las fechas exactas de esta semana (Formato seguro YYYY-MM-DD local)
+      const weekDatesStr = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        weekDatesStr.push(`${yyyy}-${mm}-${dd}`);
+      }
+
+      // Sumar ventas asegurando que la fecha coincida exactamente sin importar la zona horaria
+      sales.forEach(s => {
+        if (!s.date) return;
+        const saleD = new Date(s.date);
+        const s_yyyy = saleD.getFullYear();
+        const s_mm = String(saleD.getMonth() + 1).padStart(2, '0');
+        const s_dd = String(saleD.getDate()).padStart(2, '0');
+        const saleStr = `${s_yyyy}-${s_mm}-${s_dd}`;
+        
+        const index = weekDatesStr.indexOf(saleStr);
+        if (index !== -1) {
+          weeklyTotals[index] += (s.amount || 0);
+        }
+      });
+
+      const maxWeeklyVal = Math.max(1, ...weeklyTotals);
+
+      // Dibujar la gráfica
+      chart.innerHTML = dayNames.map((d, i) => {
+        const val = weeklyTotals[i];
+        const h = val === 0 ? 5 : Math.max(5, (val / maxWeeklyVal) * 100); 
+        
+        // CORRECCIÓN: Se agregó 'h-full' al contenedor padre para que el height en % funcione
+        return `
+          <div class="flex-1 h-full flex flex-col items-center justify-end gap-1 group cursor-pointer" title="Ventas: $${val.toLocaleString()}">
+            <div class="w-full bg-gradient-to-t ${val === 0 ? 'from-dark-600 to-dark-500' : 'from-gold-600 to-gold-400'} rounded-t transition-all duration-500 hover:opacity-80 shadow-lg" style="height:${h}%"></div>
+            <span class="text-[8px] md:text-[9px] ${val === 0 ? 'text-dark-500' : 'text-gold-500 font-bold'}">${d}</span>
+          </div>`;
       }).join('');
+      // ==========================================
 
       const serviceCounts = {};
-      sales.filter(s => s.type === 'sale_service').forEach(s => { serviceCounts[s.service] = (serviceCounts[s.service]||0) + (s.quantity||1); });
-      const ranked = Object.entries(serviceCounts).sort((a,b) => b[1]-a[1]).slice(0,5);
-      document.getElementById('services-ranking').innerHTML = ranked.length === 0 ? '<p class="text-[10px] md:text-[11px] text-dark-400">Sin datos</p>' :
-        ranked.map(([name,count],i) => `<div class="flex items-center gap-2"><span class="text-[9px] md:text-[10px] text-gold-500 font-bold w-4">${i+1}</span><span class="text-[10px] md:text-[11px] flex-1">${name}</span><span class="text-[9px] md:text-[10px] text-dark-400">${count}</span></div>`).join('');
+      sales.filter(s => s.type === 'sale_service').forEach(s => { serviceCounts[s.service] = (serviceCounts[s.service] || 0) + (s.quantity || 1); });
+      const ranked = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      document.getElementById('services-ranking').innerHTML = ranked.length === 0 ? '<p class="text-[10px] md:text-[11px] text-dark-400">Sin datos de ventas aún.</p>' :
+        ranked.map(([name, count], i) => `<div class="flex items-center gap-2"><span class="text-[9px] md:text-[10px] text-gold-500 font-bold w-4">${i + 1}</span><span class="text-[10px] md:text-[11px] flex-1">${name}</span><span class="text-[9px] md:text-[10px] text-dark-400">${count} ventas</span></div>`).join('');
 
       renderSalesCalendar();
     }
 
     function updateFinance() {
       const sales = allData.filter(d => d.type?.startsWith('sale_'));
+      const financialRecords = allData.filter(d => d.type?.startsWith('sale_') || d.type === 'expense');
+
       const now = new Date();
       const today = now.toISOString().split('T')[0];
-      const weekAgo = new Date(now - 7*86400000).toISOString();
+      const weekAgo = new Date(now - 7 * 86400000).toISOString();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-      const todayTotal = sales.filter(s => (s.date||'').startsWith(today)).reduce((t,s) => t+(s.amount||0),0);
-      const weekTotal = sales.filter(s => (s.date||'') >= weekAgo).reduce((t,s) => t+(s.amount||0),0);
-      const monthTotal = sales.filter(s => (s.date||'') >= monthStart).reduce((t,s) => t+(s.amount||0),0);
-      const total = sales.reduce((t,s) => t+(s.amount||0),0);
+      const todayTotal = sales.filter(s => (s.date || '').startsWith(today)).reduce((t, s) => t + (s.amount || 0), 0);
+      const weekTotal = sales.filter(s => (s.date || '') >= weekAgo).reduce((t, s) => t + (s.amount || 0), 0);
+      const monthTotal = sales.filter(s => (s.date || '') >= monthStart).reduce((t, s) => t + (s.amount || 0), 0);
+      const total = sales.reduce((t, s) => t + (s.amount || 0), 0);
 
       document.getElementById('fin-today').textContent = '$' + todayTotal.toLocaleString();
       document.getElementById('fin-week').textContent = '$' + weekTotal.toLocaleString();
       document.getElementById('fin-month').textContent = '$' + monthTotal.toLocaleString();
       document.getElementById('fin-total').textContent = '$' + total.toLocaleString();
 
-      document.getElementById('finance-history').innerHTML = sales.length === 0 ? '<p class="text-dark-400 text-xs">Sin ventas</p>' :
-        sales.sort((a,b) => (b.date||'').localeCompare(a.date||'')).slice(0,15).map(s =>
-          `<div class="flex justify-between items-center py-1 md:py-1.5 border-b border-dark-700 text-xs"><div><span class="font-medium">${s.service||s.product}</span><span class="text-dark-400 ml-2">${s.employee}</span></div><span class="text-gold-500">$${s.amount}</span></div>`
-        ).join('');
+      document.getElementById('finance-history').innerHTML = financialRecords.length === 0 ? '<p class="text-dark-400 text-xs">Sin movimientos</p>' :
+        financialRecords.sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 15).map(r => {
+          if (r.type === 'expense') {
+              return `<div class="flex justify-between items-center py-2 border-b border-dark-700 text-xs"><div><span class="font-medium text-red-400">Gasto: ${r.concept}</span><span class="text-dark-400 ml-2 text-[9px]">${formatDate(r.date)}</span></div><span class="text-red-400 font-bold">-$${r.amount}</span></div>`;
+          } else {
+              return `<div class="flex justify-between items-center py-2 border-b border-dark-700 text-xs"><div><span class="font-medium">${r.service || r.product}</span><span class="text-dark-400 ml-2 text-[9px]">${r.employee}</span></div><span class="text-gold-500 font-bold">+$${r.amount}</span></div>`;
+          }
+        }).join('');
+
+      // Construir Gráfica Chart.js (Últimos 7 días)
+      const graphDays = [];
+      const graphTotals = [];
+      for(let i=6; i>=0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const shortName = d.toLocaleDateString('es-MX', { weekday: 'short' }).substring(0,3);
+        graphDays.push(shortName);
+        
+        const dayTotal = sales.filter(s => (s.date||'').startsWith(dateStr)).reduce((sum, s) => sum + (s.amount||0), 0);
+        graphTotals.push(dayTotal);
+      }
+
+      const ctx = document.getElementById('financeChart');
+      if (ctx) {
+        if(financeChartInstance) financeChartInstance.destroy();
+        financeChartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: graphDays,
+            datasets: [{
+              label: 'Ingresos ($)',
+              data: graphTotals,
+              borderColor: '#d4af37',
+              backgroundColor: 'rgba(212, 175, 55, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: '#2d2d2d' }, ticks: { color: '#9e9e9e', font: { size: 10 } } },
+              x: { grid: { display: false }, ticks: { color: '#9e9e9e', font: { size: 10 } } }
+            }
+          }
+        });
+      }
     }
 
     function updateEmployeeStats() {
       const sales = allData.filter(d => d.type?.startsWith('sale_'));
-      ['Carlos','Miguel','Jesús'].forEach(emp => {
+      const grid = document.getElementById('employees-grid');
+      const posSelect = document.getElementById('pos-employee'); // Select del POS
+      const aptSelect = document.getElementById('apt-employee'); // Select de la Agenda
+      
+      let gridHTML = '';
+      let selectHTML = '';
+
+      // Mapa de colores seguros para Tailwind
+      const themeClasses = {
+        'gold': 'bg-gradient-to-br from-gold-500 to-gold-700 text-dark-900 shadow-gold-500/20',
+        'blue': 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-500/20',
+        'purple': 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-purple-500/20',
+        'green': 'bg-gradient-to-br from-green-500 to-green-700 text-white shadow-green-500/20',
+        'red': 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-500/20'
+      };
+
+      Object.keys(employeesData).forEach(emp => {
+        const data = employeesData[emp];
+        // Filtrar ventas de este empleado específico
         const empSales = sales.filter(s => s.employee === emp);
-        const key = emp.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        const sEl = document.getElementById('emp-'+key+'-sales');
-        const iEl = document.getElementById('emp-'+key+'-income');
-        if (sEl) sEl.textContent = empSales.length;
-        if (iEl) iEl.textContent = '$' + empSales.reduce((t,s) => t+(s.amount||0),0).toLocaleString();
+        const totalSales = empSales.length;
+        const totalIncome = empSales.reduce((t, s) => t + (s.amount || 0), 0);
+        
+        // Inicial para el Avatar
+        const initial = emp.charAt(0).toUpperCase();
+        const tClass = themeClasses[data.theme] || themeClasses['gold'];
+
+        // Crear la tarjeta visual con botones de editar/eliminar
+        gridHTML += `
+        <div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 text-center hover:border-gold-500 transition relative mt-2">
+          
+          <div class="absolute top-2 right-2 flex items-center gap-1">
+            <button onclick="editEmployee('${emp}')" class="text-blue-400 hover:text-blue-300 transition p-1.5 bg-blue-400/10 rounded hover:bg-blue-400/20" title="Editar Empleado">
+               <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="deleteEmployee('${emp}')" class="text-red-400 hover:text-red-300 transition p-1.5 bg-red-400/10 rounded hover:bg-red-400/20" title="Eliminar Empleado">
+               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <div class="w-12 md:w-16 h-12 md:h-16 rounded-full ${tClass} mx-auto mb-2 md:mb-3 flex items-center justify-center font-bold text-lg md:text-xl font-display shadow-lg">${initial}</div>
+          <p class="font-semibold text-xs md:text-sm mt-2">${emp}</p>
+          <p class="text-[9px] md:text-[10px] text-dark-400 mb-2 md:mb-3">${data.role}</p>
+          
+          <div class="grid grid-cols-2 gap-2 text-center border-t border-dark-700 pt-3">
+            <div>
+              <p class="text-xs md:text-sm font-bold text-gold-500">${totalSales}</p>
+              <p class="text-[8px] md:text-[9px] text-dark-400">Servicios</p>
+            </div>
+            <div>
+              <p class="text-xs md:text-sm font-bold text-gold-500">$${totalIncome.toLocaleString()}</p>
+              <p class="text-[8px] md:text-[9px] text-dark-400">Ingresos</p>
+            </div>
+          </div>
+        </div>`;
+
+        // Crear las opciones para los Selects (Listas desplegables)
+        selectHTML += `<option value="${emp}">${emp}</option>`;
       });
+
+      if(grid) grid.innerHTML = gridHTML;
+      if(posSelect) posSelect.innerHTML = selectHTML;
+      if(aptSelect) aptSelect.innerHTML = selectHTML;
+
+      // Recargar iconos en estas tarjetas dinámicas
+      if(window.lucide) lucide.createIcons();
+    }
+
+    function editEmployee(oldName) {
+      const currentRole = employeesData[oldName].role;
+      
+      // Pedir nuevos datos
+      const newName = prompt(`Editar nombre del empleado (Actual: ${oldName}):`, oldName);
+      if (newName === null) return; // El usuario canceló
+      
+      const newRole = prompt(`Editar puesto de ${newName} (Actual: ${currentRole}):`, currentRole);
+      if (newRole === null) return; // El usuario canceló
+
+      const trimmedName = newName.trim();
+      const trimmedRole = newRole.trim();
+
+      if (!trimmedName || !trimmedRole) {
+        showToast('El nombre y el puesto no pueden estar vacíos', 'red');
+        return;
+      }
+
+      // Si cambió el nombre, necesitamos crear una nueva clave y borrar la anterior
+      if (trimmedName !== oldName) {
+        if (employeesData[trimmedName]) {
+           showToast('Ya existe otro empleado con ese nombre', 'red');
+           return;
+        }
+        // Pasamos sus datos al nuevo nombre conservando su color de diseño
+        employeesData[trimmedName] = { 
+          role: trimmedRole, 
+          theme: employeesData[oldName].theme 
+        };
+        delete employeesData[oldName];
+      } else {
+        // Si el nombre es el mismo, solo actualizamos su rol
+        employeesData[oldName].role = trimmedRole;
+      }
+
+      // Guardamos cambios
+      saveEmployees();
+      updateEmployeeStats(); // Refresca las tarjetas y los selectores
+      showToast(`Información de ${trimmedName} actualizada`, 'green');
+    }
+
+    function deleteEmployee(name) {
+      if(confirm(`¿Estás seguro de que deseas ELIMINAR definitivamente a ${name}?\n(No se borrará su historial de ventas pasadas, pero ya no podrá ser seleccionado en nuevas citas o ventas).`)) {
+        
+        delete employeesData[name]; // Lo quitamos del objeto de empleados
+        
+        saveEmployees(); // Actualizamos Firebase
+        updateEmployeeStats(); // Refrescamos las vistas
+        showToast(`Empleado ${name} eliminado`, 'red');
+      }
     }
 
     function updateTicketsList() {
       const sales = allData.filter(d => d.type?.startsWith('sale_') && d.notes?.startsWith('Ticket'));
       const grouped = {};
-      sales.forEach(s => { const t = s.notes; if(!grouped[t]) grouped[t]=[]; grouped[t].push(s); });
+      sales.forEach(s => { const t = s.notes; if (!grouped[t]) grouped[t] = []; grouped[t].push(s); });
+      
       const container = document.getElementById('tickets-list');
-      const tickets = Object.entries(grouped).sort((a,b) => b[0].localeCompare(a[0])).slice(0,10);
-      container.innerHTML = tickets.length === 0 ? '<p class="text-xs text-dark-400 text-center py-6 md:py-8">Sin tickets</p>' :
+      if(!container) return;
+      
+      const tickets = Object.entries(grouped).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 30); // Mostrar últimos 30
+      
+      container.innerHTML = tickets.length === 0 ? '<div class="col-span-full"><p class="text-xs text-dark-400 text-center py-6">Sin tickets registrados</p></div>' :
         tickets.map(([ticket, items]) => {
-          const total = items.reduce((t,i) => t+(i.amount||0),0);
-          return `<div class="bg-dark-800 rounded-lg border border-dark-600 p-2 md:p-3"><div class="flex justify-between"><span class="text-xs md:text-sm font-medium text-gold-500">${ticket}</span><span class="text-xs md:text-sm font-bold">$${total}</span></div><p class="text-[8px] md:text-[9px] text-dark-400 mt-1">${items[0]?.client_name} • ${items[0]?.employee} • ${formatDate(items[0]?.date)}</p></div>`;
+          // Calculamos el subtotal de los items y luego agregamos el IVA para mostrar el total cobrado
+          const subtotal = items.reduce((t, i) => t + (i.amount || 0), 0);
+          const tax = Math.round(subtotal * 0.16);
+          const total = subtotal + tax;
+
+          return `<div class="bg-dark-800 rounded-xl border border-dark-600 p-3 md:p-4 hover:border-gold-500 transition relative">
+            <div class="absolute top-3 right-3 flex items-center gap-2">
+              <button onclick="reprintTicket('${ticket}')" class="text-blue-400 hover:text-blue-300 transition p-1 bg-blue-400/10 rounded hover:bg-blue-400/20" title="Ver / Imprimir Ticket">
+                 <i data-lucide="printer" class="w-4 h-4"></i>
+              </button>
+              <button onclick="deleteTicket('${ticket}')" class="text-red-400 hover:text-red-300 transition p-1 bg-red-400/10 rounded hover:bg-red-400/20" title="Eliminar Venta">
+                 <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+            
+            <div class="flex justify-between items-center mb-2 pr-16">
+              <span class="text-xs md:text-sm font-medium bg-gold-500/10 text-gold-500 px-2 py-1 rounded">${ticket}</span>
+              <span class="text-xs md:text-sm font-bold text-green-400">$${total.toFixed(2)}</span>
+            </div>
+            <p class="text-[9px] md:text-[10px] text-dark-300"><i data-lucide="user" class="w-3 h-3 inline mr-1"></i>${items[0]?.client_name || 'General'}</p>
+            <p class="text-[9px] md:text-[10px] text-dark-300 mt-1"><i data-lucide="scissors" class="w-3 h-3 inline mr-1"></i>${items[0]?.employee}</p>
+            <p class="text-[8px] md:text-[9px] text-dark-400 mt-2 pt-2 border-t border-dark-700 text-right">${formatDate(items[0]?.date)}</p>
+          </div>`;
         }).join('');
+      
+      if(window.lucide) lucide.createIcons();
+    }
+
+    function reprintTicket(ticketNotes) {
+      // Filtrar todos los items que corresponden a este ticket
+      const items = allData.filter(d => d.notes === ticketNotes);
+      if (items.length === 0) return;
+
+      const client = items[0].client_name || 'General';
+      const employee = items[0].employee;
+      const dateStr = formatDate(items[0].date); 
+      const method = ticketNotes.includes('-') ? ticketNotes.split(' - ')[1] : 'Desconocido';
+      
+      // Reconstruir el formato del carrito
+      const cartItems = items.map(i => ({
+          name: i.service || i.product,
+          price: i.amount / (i.quantity || 1),
+          qty: i.quantity || 1
+      }));
+
+      // Calcular montos
+      const subtotal = items.reduce((t, i) => t + (i.amount || 0), 0);
+      const tax = Math.round(subtotal * 0.16);
+      const finalTotal = subtotal + tax;
+      
+      // Extraer el número de ticket
+      const ticketNumMatch = ticketNotes.match(/#(\d+)/);
+      const ticketNum = ticketNumMatch ? ticketNumMatch[1] : 'COPIA';
+
+      // Insertar HTML en el modal existente
+      const content = document.getElementById('ticket-content');
+      content.innerHTML = `
+        <div style="font-family: 'Courier New', Courier, monospace; width: 100%; color: black; background: white; padding: 10px 0;">
+          <div style="text-align: center; margin-bottom: 15px;">
+            <h2 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Barbería Cochilocos</h2>
+            <p style="font-size: 12px; margin: 2px 0;">Av. Principal #123, Centro</p>
+            <p style="font-size: 12px; margin: 2px 0;">Tel: (555) 123-4567</p>
+            <div style="border-top: 1px dashed black; margin: 10px 0;"></div>
+          </div>
+          <div style="font-size: 12px; margin-bottom: 15px; text-align: left;">
+            <p style="margin: 2px 0;"><strong>Ticket:</strong> #${ticketNum} <span style="font-size:10px; font-weight: bold;">(REIMPRESIÓN)</span></p>
+            <p style="margin: 2px 0;"><strong>Fecha original:</strong> ${dateStr}</p>
+            <p style="margin: 2px 0;"><strong>Atendió:</strong> ${employee}</p>
+            <p style="margin: 2px 0;"><strong>Cliente:</strong> ${client}</p>
+            <div style="border-top: 1px dashed black; margin: 10px 0;"></div>
+          </div>
+          <div style="font-size: 12px; margin-bottom: 15px;">
+            <table style="width: 100%; text-align: left; border-collapse: collapse;">
+              <thead>
+                <tr><th style="padding-bottom: 5px; width: 15%;">Cant</th><th style="padding-bottom: 5px; width: 55%;">Desc</th><th style="padding-bottom: 5px; text-align: right;">Importe</th></tr>
+              </thead>
+              <tbody>
+                ${cartItems.map(i => `<tr><td style="vertical-align: top; padding: 2px 0;">${i.qty}</td><td style="vertical-align: top; padding: 2px 0;">${i.name}</td><td style="vertical-align: top; text-align: right; padding: 2px 0;">$${(i.price*i.qty).toFixed(2)}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div style="border-top: 1px dashed black; padding-top: 10px; font-size: 12px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>Subtotal:</span><span>$${subtotal.toFixed(2)}</span></div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>IVA (16%):</span><span>$${tax.toFixed(2)}</span></div>
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-top: 5px;"><span>TOTAL:</span><span>$${finalTotal.toFixed(2)}</span></div>
+          </div>
+          <div style="border-top: 1px dashed black; padding-top: 10px; font-size: 12px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span>PAGADO CON:</span><span>${method}</span></div>
+          </div>
+          <div style="text-align: center; font-size: 11px; margin-top: 20px;">
+            <p style="margin: 0;">*** COPIA DE COMPROBANTE ***</p>
+          </div>
+        </div>
+      `;
+      // Abrir el modal
+      document.getElementById('ticket-modal').classList.remove('hidden');
     }
 
     function renderSalesCalendar() {
       const year = currentSalesCalendarDate.getFullYear();
       const month = currentSalesCalendarDate.getMonth();
+      
+      // 1. Obtener ventas y citas
       const sales = allData.filter(d => d.type?.startsWith('sale_'));
-      
-      const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      const appointments = allData.filter(d => d.type === 'appointment');
+
+      const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
       document.getElementById('sales-month-display').textContent = `${monthNames[month]} ${year}`;
-      
+
+      // 2. Agrupar ventas por fecha
       const salesByDate = {};
-      sales.forEach(s => {
-        const date = (s.date || '').split('T')[0];
-        if (date) salesByDate[date] = (salesByDate[date] || 0) + (s.amount || 0);
+      sales.forEach(s => { 
+        const date = (s.date || '').split('T')[0]; 
+        if (date) salesByDate[date] = (salesByDate[date] || 0) + (s.amount || 0); 
       });
-      
+
+      // 3. Agrupar citas por fecha
+      const apptsByDate = {};
+      appointments.forEach(a => { 
+        const date = (a.date || '').split('T')[0]; 
+        if (date) apptsByDate[date] = (apptsByDate[date] || 0) + 1; 
+      });
+
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const daysInPrevMonth = new Date(year, month, 0).getDate();
-      
       const grid = document.getElementById('sales-calendar-grid');
       grid.innerHTML = '';
-      
+
       const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+      
+      // Días del mes anterior
       for (let i = adjustedFirstDay - 1; i >= 0; i--) {
         const day = daysInPrevMonth - i;
         const dayEl = document.createElement('div');
@@ -962,30 +1918,30 @@
         dayEl.textContent = day;
         grid.appendChild(dayEl);
       }
-      
+
+      // Días del mes actual
       for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const daySales = salesByDate[dateStr] || 0;
+        const dayAppts = apptsByDate[dateStr] || 0; // Obtenemos el número de citas del día
+        
         const dayEl = document.createElement('div');
+
+        let bgClass = daySales === 0 ? 'bg-dark-700 border-dark-600' : daySales < 500 ? 'bg-blue-900 border-blue-800' : daySales < 1000 ? 'bg-blue-600 border-blue-500' : 'bg-gold-600 border-gold-500';
         
-        let bgClass = 'bg-dark-700 border-dark-600';
-        if (daySales === 0) {
-          bgClass = 'bg-dark-700 border-dark-600';
-        } else if (daySales < 500) {
-          bgClass = 'bg-blue-900 border-blue-800';
-        } else if (daySales < 1000) {
-          bgClass = 'bg-blue-600 border-blue-500';
-        } else {
-          bgClass = 'bg-gold-600 border-gold-500';
-        }
+        // Agregamos 'relative' al contenedor para poder posicionar el marcador encima
+        dayEl.className = `relative p-2 md:p-3 rounded-lg text-center border cursor-pointer transition hover:border-gold-400 ${bgClass}`;
         
-        dayEl.className = `p-2 md:p-3 rounded-lg text-center border cursor-pointer transition hover:border-gold-400 ${bgClass}`;
-        dayEl.innerHTML = `<div class="text-xs font-bold text-white">${day}</div><div class="text-[9px] md:text-[10px] text-gold-300 font-medium">$${daySales}</div>`;
+        // Creamos el elemento del marcador dinámicamente si hay más de 0 citas
+        const marker = dayAppts > 0 ? `<div class="absolute top-1 right-1 w-2 h-2 bg-blue-400 rounded-full shadow-[0_0_5px_rgba(96,165,250,0.8)]" title="${dayAppts} cita(s)"></div>` : '';
+
+        // Inyectamos el marcador junto con la información de los días y ventas
+        dayEl.innerHTML = `${marker}<div class="text-xs font-bold text-white">${day}</div><div class="text-[9px] md:text-[10px] text-gold-300 font-medium">$${daySales}</div>`;
         grid.appendChild(dayEl);
       }
-      
-      const totalCells = grid.children.length;
-      const remainingCells = 42 - totalCells;
+
+      // Días del mes siguiente
+      const remainingCells = 42 - grid.children.length;
       for (let day = 1; day <= remainingCells; day++) {
         const dayEl = document.createElement('div');
         dayEl.className = 'p-2 md:p-3 rounded-lg text-xs text-center text-dark-500 bg-dark-700 border border-dark-600 cursor-default';
@@ -993,28 +1949,178 @@
         grid.appendChild(dayEl);
       }
     }
-
     function prevSalesMonth() { currentSalesCalendarDate = new Date(currentSalesCalendarDate.getFullYear(), currentSalesCalendarDate.getMonth() - 1, 1); renderSalesCalendar(); }
     function nextSalesMonth() { currentSalesCalendarDate = new Date(currentSalesCalendarDate.getFullYear(), currentSalesCalendarDate.getMonth() + 1, 1); renderSalesCalendar(); }
 
-    function closeTicketModal() { document.getElementById('ticket-modal').classList.add('hidden'); }
+    function formatDate(d) { if (!d) return ''; try { return new Date(d).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return d; } }
 
-    function formatDate(d) { if(!d) return ''; try { return new Date(d).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); } catch(e) { return d; } }
+    // Variable global para controlar el temporizador de las notificaciones
+    let toastTimeout;
 
-    function showToast(msg, color='green') {
+    function showToast(msg, color = 'green') {
       const t = document.getElementById('toast');
+      
+      // 1. Limpiamos cualquier temporizador previo para evitar que se congelen
+      clearTimeout(toastTimeout);
+      
+      // 2. Asignamos el mensaje y reiniciamos las clases para hacerlo visible
       t.textContent = msg;
       t.className = `fixed bottom-4 right-4 bg-${color}-500 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-lg transition-all duration-300 z-50 transform translate-y-0 opacity-100`;
-      setTimeout(() => { t.classList.add('translate-y-20','opacity-0'); }, 2500);
+      
+      // 3. Creamos el nuevo temporizador para ocultarlo a los 3.5 segundos (3500 ms)
+      toastTimeout = setTimeout(() => { 
+        // Removemos las clases de visibilidad
+        t.classList.remove('translate-y-0', 'opacity-100');
+        // Añadimos las clases para ocultarlo y evitar que estorbe los clics
+        t.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none'); 
+      }, 3500);
     }
 
-    // Initialize
-    loadData();
-    renderDynamicProducts();
-    renderCart();
-    renderCalendar();
-    updateDashboard();
+    // --- LÓGICA DE LOGIN Y LOGOUT ---
+    function togglePassword() {
+      const passInput = document.getElementById('login-pass');
+      const eyeIcon = document.getElementById('eye-icon');
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        eyeIcon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        passInput.type = 'password';
+        eyeIcon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons(); // Recargar el ícono
+    }
+
+    async function processLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+
+  // Verificar si es admin
+  if (user === 'admin' && pass === 'admin') {
+      accesoExitoso();
+      return;
+  }
+
+  // Verificar en Firebase
+  const doc = await db.collection('users').doc(user).get();
+  if (doc.exists && doc.data().password === pass) {
+      accesoExitoso();
+  } else {
+      showToast('Usuario o contraseña incorrectos', 'red');
+  }
+}
+
+function accesoExitoso() {
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    navigate('dashboard');
+    showToast('Bienvenido', 'green');
+}
+    function processLogout() {
+      // Eliminamos el 'confirm()' para que la acción sea directa
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('login-view').style.display = 'flex';
+      
+      showToast('Sesión cerrada correctamente', 'green');
+    }
+   // Inicializar la Aplicación asíncronamente
+   async function initApp() {
+        await loadEmployees();
+        await loadServices();  
+        await loadInventory(); 
+        await loadData();      
+        
+        renderServices();
+        renderDynamicProducts();
+        renderCart();
+        renderCalendar();
+        renderUsers(); // <--- AGREGA ESTA LÍNEA AQUÍ
+        updateAllViews(); 
+        lucide.createIcons();
+   }
+    // Arrancar
+    initApp();
+
+  // --- LÓGICA DE USUARIOS ---
+
+function editUser(id, pass) {
+    document.getElementById('edit-u-id').value = id;
+    document.getElementById('new-u-name').value = id;
+    document.getElementById('new-u-name').disabled = true;
+    document.getElementById('new-u-pass').value = pass;
+    document.getElementById('form-title').innerText = 'Editar Usuario';
+    document.getElementById('user-form').classList.remove('hidden');
+}
+
+function hideUserForm() {
+    document.getElementById('user-form').classList.add('hidden');
+    document.getElementById('new-u-name').disabled = false;
+    document.getElementById('new-u-name').value = '';
+    document.getElementById('new-u-pass').value = '';
+    document.getElementById('form-title').innerText = 'Nuevo Usuario';
+}
+
+async function saveUser() {
+    const id = document.getElementById('new-u-name').value.trim();
+    const pass = document.getElementById('new-u-pass').value.trim();
+
+    if (!id || !pass) { showToast('Completa campos', 'red'); return; }
+    if (id === 'admin') { showToast('No puedes modificar el usuario admin', 'red'); return; }
+    
+    await db.collection('users').doc(id).set({ password: pass });
+    
+    showToast('Usuario guardado correctamente', 'green');
+    hideUserForm();
+    renderUsers();
+}
+
+async function renderUsers() {
+    const list = document.getElementById('users-list');
+    const snapshot = await db.collection('users').get();
+    list.innerHTML = '';
+    snapshot.forEach(doc => {
+        if(doc.id === 'admin') return; 
+        const data = doc.data();
+        list.innerHTML += `
+        <div class="bg-dark-800 p-4 rounded-xl border border-dark-600 flex justify-between items-center">
+            <div><p class="font-bold text-sm">${doc.id}</p><p class="text-xs text-dark-400">Pass: ${data.password}</p></div>
+            <div class="flex gap-2">
+                <button onclick="editUser('${doc.id}', '${data.password}')" class="text-gold-500 hover:text-gold-400"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                <button onclick="deleteUser('${doc.id}')" class="text-red-400 hover:text-red-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+        </div>`;
+    });
     lucide.createIcons();
+}
+
+async function deleteUser(id) {
+    if(confirm('¿Seguro que deseas eliminar este usuario?')) {
+        await db.collection('users').doc(id).delete();
+        renderUsers();
+        showToast('Usuario eliminado', 'red');
+    }
+}
+
+async function renderUsers() {
+    const list = document.getElementById('users-list');
+    const snapshot = await db.collection('users').get();
+    list.innerHTML = '';
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        list.innerHTML += `
+        <div class="bg-dark-800 p-4 rounded-xl border border-dark-600 flex justify-between items-center">
+            <div><p class="font-bold text-sm">${doc.id}</p><p class="text-xs text-dark-400">Pass: ${data.password}</p></div>
+            <button onclick="deleteUser('${doc.id}')" class="text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        </div>`;
+    });
+    lucide.createIcons();
+}
+
+async function deleteUser(id) {
+    await db.collection('users').doc(id).delete();
+    renderUsers();
+    showToast('Usuario eliminado', 'red');
+}
   </script>
- </body>
-</html>
+</body>
+
+</html> 
